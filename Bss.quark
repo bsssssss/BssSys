@@ -1,0 +1,11 @@
+(
+  name: "Bss",
+  summary: "Bss's sonic system.",
+  version: "1.0.0",
+  //schelp: "DemonWidgets",
+  dependencies: [
+    "Log"
+  ],
+  license: "GPL",
+  copyright: "Maxime Besse, 2025"
+)

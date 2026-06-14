@@ -1,9 +1,0 @@
-(
-  name: "BssOS",
-  summary: "Personal environment for making sounds.",
-  version: "1.0.0",
-  //schelp: "DemonWidgets",
-  //dependencies: ["Bjorklund", "Canvas3D", "cruciallib@tags/4.1.4"],
-  license: "GPL",
-  copyright: "Maxime Besse, 2025"
-)

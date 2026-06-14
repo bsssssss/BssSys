@@ -1,4 +1,4 @@
-RRec {
+BssRecord {
 	// TODO: default path for windows
 	var <>recordingsDir = "~/Sounds/samples/sc/rrec";
 	var <>fileName;
