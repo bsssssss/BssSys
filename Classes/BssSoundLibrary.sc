@@ -53,7 +53,7 @@ BssSoundLibrary {
 	loadSoundFileFolder { |folderPath, name, append=false|
 		var filePaths;
 
-		if (name.isNil)                  { logger.error("need a name"); ^nil };
+		if (name.isNil) { logger.error("need a name"); ^nil };
 		if (File.exists(folderPath).not) { logger.error("% does not exist", folderPath); ^nil };
 
 		filePaths = pathMatch(folderPath.standardizePath +/+ "*");
@@ -146,16 +146,19 @@ BssSoundLibrary {
 		^bufferEvents[name];
 	}
 
+	showSoundFiles {
+		if (buffers.size == 0) {
+			"sound file pool is empty...".postln 
+		} {
+			format("% folder%:", buffers.size, if(buffers.size > 1, "s", "")).postln;
+			buffers.keysValuesDo { |k,v|
+				format("\t% (% file%)", k.asString.padRight(30,"."), v.size, if(v.size > 1, "s", "")).postln;
+			}
+		};
+	}
+
 	show {
-		"\n=== Sound Library ===".postln;
 		this.showSoundFiles;
 	}
 
-	showSoundFiles {
-		if (buffers.size == 0) { "no folder registered" };
-		format("% folder%:", buffers.size, if(buffers.size > 1, "s", "")).postln;
-		buffers.keysValuesDo { |k,v|
-			format("\t% (% file%)", k.asString.padRight(30,"."), v.size, if(v.size > 1, "s", "")).postln;
-		}
-	}
 }

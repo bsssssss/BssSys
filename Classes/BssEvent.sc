@@ -1,67 +1,46 @@
 BssEvent {
-	var <bss;   // a Bss instance
-	var <event; // the event for an instance of this class
+	var <track, <modules, <event;
 
-	*new { |bss, event|
-		^super.newCopyArgs(bss: bss, event: event);
+	*new { |track, modules, event|
+		^super.newCopyArgs(track, modules, event);
 	}
 
 	play {
-		event.parent = bss.defaultParentEvent;
+		event.parent = track.defaultParentEvent;
 		event.use {
 			this.mergeSoundEvent;
-			this.playSynth;
-		}
+			this.playSynths;
+		};
+		^event;
 	}
 
 	mergeSoundEvent {
-		var soundEvent = bss.soundLibrary.getEvent(~s, ~n);
+		var soundEvent = track.bss.soundLibrary.getEvent(~s, ~n);
 		if (soundEvent.notNil) {
 			currentEnvironment.proto = soundEvent;
 		}
 	}
 
-	playSynth {
-		bss.server.bind {
-			this.playSound;	
-		}
-	}
-
-	playSound {
-		var instrument, args;
-		bss.logger.debug("(%): got %: %", thisMethod, ~instrument, args);
-		if (~buffer.notNil) {
-			args = [
-				bufnum: ~bufnum,
-				rate: ~rate,
-				sustain: ~sustain ?? ~duration,
-				begin: ~begin,
-				pan: ~pan,
-				amp: ~amp,
-			];
-			this.sendSynth(~instrument, args);
-		} {
-			if (~instrument.notNil) {
-				this.sendSynth(~instrument, args);
-			} {
-				"no sound or synth named %, dropping event...".format(~s).warn
-			}
-		}
-	}
-
 	getMsgFunc { |instrument|
-		var sd = SynthDescLib.global.synthDescs.at(instrument.asSymbol).msgFunc;
-		if (sd.isNil) {
-			bss.logger.error("(%): no msgFunc for instrument %, either synth does not exist, or there is a problem with the synthDesc...", thisMethod, instrument);
+		var msgFunc = SynthDescLib.global.synthDescs.at(instrument).msgFunc;
+		if (msgFunc.notNil) {
+			^msgFunc;
 		} {
-			^sd;
+			track.bss.logger.error( "(%): no msgFunc for instrument %", thisMethod, instrument);
 		};
 	}
 
 	sendSynth { |instrument, args|
-		args = args ?? { this.getMsgFunc(instrument).valueEnvir };
-		bss.logger.debug("sending to scsynth: %%", instrument, args);
-		Synth(instrument, args);
+		args = args ?? { this.getMsgFunc(instrument.asSymbol).valueEnvir }; // get synth arguments from event if nil
+		args.flop.do { |argList| 
+			Synth.tail(track.group, instrument, argList);
+		};
+	}
+
+	playSynths {
+		track.server.bind {
+			modules.do(_.value(this));
+		}
 	}
 
 	show { |event|

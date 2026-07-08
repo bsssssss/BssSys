@@ -1,5 +1,3 @@
-/*
- */
 BssPan {
 	classvar <>defaultPanningFunction;
 
@@ -12,9 +10,8 @@ BssPan {
 				2, {
 					BssPan2.ar(signals, \span.ir(1), pan, mul);
 				},
-				// more
 				{
-					
+					Error("numChannels > 2 not implemented").throw;
 				}
 			);
 		};
