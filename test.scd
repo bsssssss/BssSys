@@ -1,15 +1,18 @@
 (
 	s.waitForBoot {
 		// make a new instance of the system and make it accessible to this environment
-		~bss = Bss(numChannels: 2, logLevel: \debug); 
-		// load a folder containing sound files and bind it to the folder name in the library
-		// loading the same folder again will overwrite the previous one.
-		~bss.loadSoundFiles("~/Sounds/samples/addor");
-		// can use wildcard to load a list of folders !
-		~bss.loadSoundFiles("~/Sounds/samples/*");
-		~bss.loadSoundFiles("~/Sounds/tidal_samples/legowelt/*");
+		~bss = Bss(numChannels: 2, logLevel: \info); 
+		~bss.start([0]);
 	};
 );
+
+// load a folder containing sound files and bind it to the folder name in the library
+// loading the same folder again will overwrite the previous one.
+~bss.loadSoundFiles("~/Sounds/samples/addor");
+
+// can use wildcard to load a list of folders !
+~bss.loadSoundFiles("~/Sounds/samples/*");
+~bss.loadSoundFiles("~/Sounds/tidal_samples/legowelt/*");
 
 // some practical accesses ///////////////////////////////////////////////////
 
@@ -26,11 +29,14 @@
 
 ~bss.logger;
 ~bss.logLevel;
-~bss.logLevel = \debug; // can be set
-~bss.defaultParentEvent;
+~bss.logLevel = \info; // can be set
+~bss.tracks[0].defaultParentEvent;
 
-~bss.play((s: \addor, n: 8, begin: 0.0, rate: 1, amp: 0.6));
-~bss.play((s: \blip, freq: exprand(100, 1000), delta: 8));
+~bss.play((s: \addor, n: 8, begin: 0.2, rate: 1, amp: 0.6));
+~bss.play((s: \blip, freq: [500,540], sustain: 0.2));
+Synth("blip", [freq: 400]);
+~bss.modules
+
 s.meter;
 s.plotTree;
 
@@ -39,64 +45,56 @@ s.plotTree;
 ( // is timing accurate ?
 	Routine {
 		inf.do {
-			~bss.play((s: \leg_hh, n: 0, sustain: 0.1));
-			0.01.wait;
+			~bss.play((s: \blip, freq: 50, sustain: 0.1));
+			(1/40).wait;
 		}
 	}.play;
 )
-( // a little song
-	r.stop;
-	r = Routine {
-		inf.do { |i|
-			var dur = 1 / ([3, 3, 2] @@ i) * 1;
-			//if (1.0.rrand(0) < 0.6) { dur = 1/8 };
 
-			if (i % 1 == 0) {
-				~bss.play((
-					s: \leg_bd,
-					n: 27,
-					rate: 2,
-					sustain: 1.1,
-					amp: -12.dbamp
-				));
+(
+	e = (
+		sliceInto: #{ |arr, n=1|
+			var chunkSize;
+			n = n.clip(0, arr.size);
+			chunkSize = (arr.size / n);
+			n.collect { |i|
+				var s = (i * chunkSize);
+				var e = ((s + chunkSize - 1).clip(0, arr.size - 1));
+				var slice = arr[(s.round..e.round)];
+				slice;
 			};
-
-			~bss.play((
-				s: \addor,
-				n: 0,
-				rate: (10/12),
-				//sustain: dur * 2,
-				amp: -12.dbamp
-			));
-
-			dur.wait;
-			dur = dur * [1/2, 2/3, 2].choose;
-
-			if (rrand(0.0,1) > 0.67) {
-				~bss.play((
-					s: \addor,
-					n: 3,
-					rate: 10/12,
-					sustain: dur,
-					amp: -12.dbamp
-				));
-			};
-
-			if (i % 4 == 0) {
-				(dur).wait;
-				~bss.play((
-					s: \leg_sd,
-					n: 28,
-					rate: 2,
-					sustain: 0.2,
-					amp: -18.dbamp
-				));
-			};
-
-			dur.wait;
 		}
-	};
-	r.play;
+	);
+)
+(
+	var n = 17;
+	var durs;
+	Routine {
+		fork {
+			inf.do { |i|
+				if (i % 2 == 0) {
+					durs = Array.fill(n, { |i| i/n }) * 0.8;
+					// durs = Array.fill(n, { [2, 1, 1/2, 2/3, 3/4, 1/8, 1/6].choose });
+					durs = e[\sliceInto].(durs, 5).scramble;
+					durs = durs * 1;
+					// durs.trunc(0.01).postln;
+				};
+				~bss.play((s: \leg_kawaik4, n: 134, sustain: 10));
+				durs.do { |seq, i|
+					if (i % 3 == 0) { 
+						~bss.play((s: \leg_korg, n: 38, sustain: 0.03));
+						(seq[0] * 1.5).wait;
+					} {
+						~bss.play((s: \leg_korg, n: 35, sustain: 0.05));
+					};
+					seq.do { |dur|
+						~bss.play((s: \leg_hh, n: 32, sustain: 0.02));
+						dur.wait;
+					}
+				};
+			}
+		};
+	}.play;
 )
 
-{ SinOsc.ar(1) * 0.9 }.plot(1);
+
