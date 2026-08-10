@@ -8,14 +8,34 @@ BssEvent {
 	play {
 		event.parent = track.defaultParentEvent;
 		event.use {
+			this.mkSoundName;
+			this.mkNote;
 			this.mergeSoundEvent;
 			this.playSynths;
 		};
 		^event;
 	}
 
+	mkSoundName {
+		var sound = ~sound ? ~s;
+
+		if (~bank.notNil) {
+			sound = format("%_%", ~bank, sound) 
+		};
+
+		~s = sound.asSymbol;
+	}
+
+	mkNote {
+		var tuning = ~tuning ? track.bss.tuning.current;
+		var scale = Scale.chromatic(tuning);
+		// scale.tuning_(tuning);
+		~scale = scale;
+		// ~scale.debug("~scale");
+	}
+
 	mergeSoundEvent {
-		var soundEvent = track.bss.soundLibrary.getEvent(~s, ~n);
+		var soundEvent = track.bss.soundLibrary.getEvent(~s, ~n ? 0);
 		if (soundEvent.notNil) {
 			currentEnvironment.proto = soundEvent;
 		}

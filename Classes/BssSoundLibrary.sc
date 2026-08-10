@@ -2,7 +2,7 @@ BssSoundLibrary {
 	var <server, <numChannels, <logger;
 	var <>soundFileExtensions = #["wav", "aiff"];
 	var <>doNotReadYet = false;
-	var <buffers, <bufferEvents;
+	var <buffers, <bufferEvents, <banks;
 
 	*new { |server, numChannels, logger|
 		^super.newCopyArgs(server, numChannels, logger).init;
@@ -11,9 +11,18 @@ BssSoundLibrary {
 	init {
 		buffers = IdentityDictionary();
 		bufferEvents = IdentityDictionary();
+		banks = IdentityDictionary();
 	}
 
-	loadSoundFiles { |paths, namingFunc = (_.basename), append=false|
+	loadSoundFilesToBank { |paths, bankName, namingFunc, append(false)|
+		var form = "%_%";
+		if (bankName.isNil) { logger.error("need a bank name") };
+		namingFunc = namingFunc ?? { { |x| format(form, bankName, x.basename) } };
+		this.loadSoundFiles(paths, namingFunc, append);
+		this.addBank(bankName);
+	}
+
+	loadSoundFiles { |paths, namingFunc(_.basename), append(false)|
 		var folderPaths;
 
 		if (paths.isNil) {
@@ -29,8 +38,7 @@ BssSoundLibrary {
 		};
 
 		logger.info("will load % folder%: %", folderPaths.size, if(folderPaths.size > 1, "s", ""), folderPaths);
-		folderPaths.do {
-			|folderPath|
+		folderPaths.do { |folderPath|
 			this.loadSoundFileFolder(folderPath, namingFunc.(folderPath), append);
 		};
 	}
@@ -50,7 +58,7 @@ BssSoundLibrary {
 		};
 	}
 
-	loadSoundFileFolder { |folderPath, name, append=false|
+	loadSoundFileFolder { |folderPath, name, append(false)|
 		var filePaths;
 
 		if (name.isNil) { logger.error("need a name"); ^nil };
@@ -68,7 +76,7 @@ BssSoundLibrary {
 		};
 	}
 
-	loadSoundFile { |path, name, append=false|
+	loadSoundFile { |path, name, append(false)|
 		var buf;
 		if (name.isNil) { logger.error("need a name"); ^nil };
 
@@ -93,7 +101,7 @@ BssSoundLibrary {
 		^BssBuffer.readWithInfo(server, path, onlyHeader: doNotReadYet);
 	}
 
-	addBuffer { |buffer, name, append=false|
+	addBuffer { |buffer, name, append(false)|
 		var event;
 		if (name.isNil)   { logger.error("need a name"); ^nil };
 		if (buffer.isNil) { logger.error("buffer is nil"); ^nil };
@@ -107,6 +115,12 @@ BssSoundLibrary {
 		buffers[name] = buffers[name].add(buffer);
 		event = this.makeBufferEvent(buffer);
 		bufferEvents[name] = bufferEvents[name].add(event);
+	}
+
+	addBank { |name|
+		if (name.isNil) { logger.error("bank name is nil") };
+		name = name.asSymbol;
+		banks[name] = banks[name].add(name);
 	}
 
 	makeBufferEvent { |buffer|

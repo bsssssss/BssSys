@@ -1,13 +1,10 @@
 Bss {
 	classvar <>maxSoundFileNumChannels = 2; // expected maximum number of channels for sound files
 
-	var <server;
-	var logLevel; // global log level. can be one of \debug, \info, \warning, \error
-	var <numChannels;
-	var <soundLibrary;
+	var <server, <numChannels, logLevel;
 	var <tracks, <outBusses, <group;
-	var <modules;
 	var <reaperProjectPath, <reaper;
+	var <modules, <soundLibrary, <tuning;
 
 	*new {|numChannels, server, logLevel|
 		^super.newCopyArgs(
@@ -22,6 +19,7 @@ Bss {
 		modules = [];
 		group = server.nextPermNodeID;
 		soundLibrary = BssSoundLibrary(server, numChannels, this.logger);
+		tuning = BssTuning();
 		this.loadSynthDefs("../synths".resolveRelative);
 		ServerTree.add(this, server);
 		"*** Bss Sonic System initialized ***".postln;
@@ -68,8 +66,16 @@ Bss {
 		^soundLibrary.doNotReadYet = bool;
 	}
 
+	loadSoundFilesToBank { |paths, bankName| 
+		soundLibrary.loadSoundFilesToBank(paths, bankName);
+	}
+
 	loadSoundFiles { |paths| 
 		soundLibrary.loadSoundFiles(paths);
+	}
+
+	loadSoundFile { |path, name, append(false)|
+		soundLibrary.loadSoundFile(path, name, append);
 	}
 
 	// modules get added here as well
@@ -106,8 +112,19 @@ Bss {
 	 * Events
 	 */
 
-	play { |event|
+	play { |...args, kwargs|
+		var event = ();
 		var track = tracks @@ (event[\track] ? 0);
+		
+		if (args.size > 0 and: {args[0].isKindOf(Event)}) {
+			event = args[0];
+		};
+
+		// allow `bss.play(freq: 666, amp: 0.2)`
+		kwargs.pairsDo { |k,v|
+			event[k] = v;
+		};
+
 		^BssEvent(track, modules, event).play
 	}
 
@@ -185,7 +202,11 @@ Bss {
 	 */
 
 	start { |busArray, withReaper = false|
-		outBusses = busArray.asArray ? [0];
+		if (busArray.isNil) {
+			outBusses = [0];
+		} {
+			outBusses = busArray.asArray;
+		};
 		this.mkNodeTree;
 		this.mkTracks;
 		if (withReaper) { this.mkReaperProject };

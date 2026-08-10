@@ -17,7 +17,7 @@
 		var snd, env;
 
 		snd = SinOsc.ar(freq) 
-			* Env.perc(\atk.kr(0), sustain).ar(Done.freeSelf)
+			* Env.perc(\atk.kr(0.01), sustain).ar(Done.freeSelf)
 		    * amp 
 			* AmpComp.ar(K2A.ar(freq), 20);
 

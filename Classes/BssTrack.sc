@@ -36,10 +36,20 @@ BssTrack {
 			~numChannels = bss.numChannels;
 			~track = this;
 
+			~tuning = #{ ~bss.tuning.current };
+			// ~scale = Scale.chromatic;
+			~octave = 5;
+			~note = #{ ~note ? 0 };
+			~midinote = #{ ~note.degreeToKey(~scale) + (12 * ~octave) };
+			~freq = #{ ~midinote.value.midicps };
+
+			~n = \none;
+
 			~amp  = 1.0;
 			~rate = 1.0;
 			~dur  = 1.0;
-			~out  = trackBus;
+
+			~out = trackBus;
 		}
 	}
 

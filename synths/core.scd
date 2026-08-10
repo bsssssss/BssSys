@@ -10,16 +10,22 @@
 
 			var name = format("bss_sampler_%ch", soundFileNumChannels);
 			SynthDef(name, {
-				var snd, phase;
-				var bufnum = \bufnum.ir(0); 
-				var rate = \rate.kr(1);
-				var numFrames = max(BufFrames.ir(bufnum), 1);
-				var phaseRate = rate * BufSampleRate.ir(bufnum);
-				var ev = Line.kr(dur: \sustain.ir(1), doneAction: Done.freeSelf);
+				var snd, phase, bufnum, rate, freq, numFrames, phaseRate, ev;
+				var trig = Trig.kr(1);
+
+				bufnum = \bufnum.ir(0);
+				freq   = \freq.kr(440);
+
+				rate = freq / 60.midicps;
+
+				numFrames = max(BufFrames.ir(bufnum), 1);
+				phaseRate = rate * BufSampleRate.ir(bufnum);
+
+				ev = Line.kr(dur: \sustain.ir(1), doneAction: Done.freeSelf);
 
 				phase = Sweep.ar(1, phaseRate) 
-				* rate
-				+ (\begin.kr(0) * numFrames);
+				      * rate
+				      + (\begin.kr(0) * numFrames);
 
 				snd = BufRd.ar(
 					soundFileNumChannels,
@@ -27,8 +33,7 @@
 					phase,
 					\loop.kr(0), 
 					4
-				) 
-				* \amp.kr(0.4);
+				) * \amp.kr(1);
 
 				snd = BssPan.ar(snd, numChannels, \pan.kr(0));
 				OffsetOut.ar(\out.kr(0), snd);
@@ -47,22 +52,22 @@
 			ReplaceOut.ar(\outBus.ir(0), sig);
 		}).add;
 
-		/***********
-		* Modules *
-		***********/
+		/*
+		 * Modules 
+		 */
+
+		// addModule take a synth name + a function which get evaluated with a BssEvent environment
 
 		~bss.addModule('sound', { |bssEvent|
-			var args;
 			if (~buffer.notNil) {
-				args = [
+				bssEvent.sendSynth(~instrument, [
 					bufnum: ~bufnum,
-					rate: ~rate,
+					freq: ~freq,
 					sustain: ~sustain ? ~buffer.duration,
 					begin: ~begin,
 					pan: ~pan,
 					amp: ~amp,
-				];
-				bssEvent.sendSynth(~instrument, args);
+				]);
 			} {
 				if (~instrument.notNil) {
 					bssEvent.sendSynth(~instrument); // arguments are handled with msgFunc
