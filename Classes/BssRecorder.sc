@@ -11,12 +11,12 @@ BssRecorder {
 	}
 
 	init {
-		recordingsDir = recordingsDir.absolutePath;
+		recordingsDir = recordingsDir.absolutePath +/+ Date.getDate.dayStamp;
 		recorder = Recorder(server);
 	}
 
 	recordingsDir_ { |path|
-		recordingsDir = path.absolutePath;
+		recordingsDir = path.absolutePath +/+ Date.getDate.dayStamp;
 	}
 
 	timestamp {
@@ -29,11 +29,12 @@ BssRecorder {
 		^recordingsDir +/+ filename ++ $_ ++ this.timestamp ++ $. ++ recorder.recHeaderFormat;
 	}
 
-	record { |name, duration(1), bus(0), node|
+	record { |name, duration(1), numChannels, bus, node|
 		var filePath = this.makePath(name);
-		recorder.prepareForRecord(filePath, numChannels);
-		server.sync;
-		recorder.record(duration: duration);
-		server.sync;
+		forkIfNeeded {
+			recorder.prepareForRecord(filePath, numChannels);
+			server.sync;
+			recorder.record(duration: duration, bus: bus, node: node);
+		}
 	}
 }
