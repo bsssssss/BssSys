@@ -127,6 +127,7 @@ BssSoundLibrary {
 		var event = (
 			bufnum: buffer.bufnum,
 			buffer: buffer,
+			filename: buffer.path.basename,
 			instrument: this.prGetBufferInstrument(buffer),
 			bufNumChannels: buffer.numChannels,
 			bufNumFrames: buffer.numFrames,
@@ -137,21 +138,20 @@ BssSoundLibrary {
 	}
 
 	prGetBufferInstrument { |buffer|
-		^format("bss_sampler_%ch", buffer.numChannels);
+		^"bss_sampler" ++ buffer.numChannels;
 	}
 
 	getEvent { |name, index|
 		var event;
 		var evs = this.at(name);
-		if (evs.isNil) {
-			// could it be a synth ??
+		if (evs.isNil) { // could it be a synth ??
 			if (SynthDescLib.at(name.asSymbol).notNil) {
 				^event = (instrument: name.asSymbol);
 			} {
 				logger.error("(%): no synth or sample named % in SynthDescLib", thisMethod, name);
 				^nil;
 			};
-		} {
+		} { // it's a buffer event
 			^evs.wrapAt(index.asInteger);
 		};
 	}

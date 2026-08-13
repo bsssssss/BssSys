@@ -48,7 +48,7 @@ Bss {
 	mkNodeTree {
 		server.sendMsg("/g_new", group, 0, 1);
 		outBusses.as(OrderedIdentitySet).do { |bus| // filter out duplicate busses
-			Synth.tail(group, "bss_output_monitor_%ch".format(numChannels), 
+			Synth.tail(group, "bss_output_monitor" ++ numChannels, 
 				[inBus: bus, outBus: bus]
 			);
 		};
@@ -113,8 +113,7 @@ Bss {
 	 */
 
 	play { |...args, kwargs|
-		var event = ();
-		var track = tracks @@ (event[\track] ? 0);
+		var track, event = ();
 		
 		if (args.size > 0 and: {args[0].isKindOf(Event)}) {
 			event = args[0];
@@ -124,6 +123,8 @@ Bss {
 		kwargs.pairsDo { |k,v|
 			event[k] = v;
 		};
+
+		track = tracks @@ (event[\track] ? 0);
 
 		^BssEvent(track, modules, event).play
 	}

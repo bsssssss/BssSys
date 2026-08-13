@@ -9,7 +9,6 @@ BssEvent {
 		event.parent = track.defaultParentEvent;
 		event.use {
 			this.mkSoundName;
-			this.mkNote;
 			this.mergeSoundEvent;
 			this.playSynths;
 		};
@@ -26,16 +25,12 @@ BssEvent {
 		~s = sound.asSymbol;
 	}
 
-	mkNote {
-		var tuning = ~tuning ? track.bss.tuning.current;
-		var scale = Scale.chromatic(tuning);
-		// scale.tuning_(tuning);
-		~scale = scale;
-		// ~scale.debug("~scale");
+	mkSoundChain {
+		
 	}
 
 	mergeSoundEvent {
-		var soundEvent = track.bss.soundLibrary.getEvent(~s, ~n ? 0);
+		var soundEvent = track.bss.soundLibrary.getEvent(~s, ~n);
 		if (soundEvent.notNil) {
 			currentEnvironment.proto = soundEvent;
 		}

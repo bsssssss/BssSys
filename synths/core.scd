@@ -8,10 +8,10 @@
 
 		(1..Bss.maxSoundFileNumChannels).do { |soundFileNumChannels|
 
-			var name = format("bss_sampler_%ch", soundFileNumChannels);
-			SynthDef(name, {
-				var snd, phase, bufnum, rate, freq, numFrames, phaseRate, ev;
+			SynthDef("bss_sampler" ++ soundFileNumChannels, {
+				var snd, phase, bufnum, rate, freq, numFrames, phaseRate;
 				var trig = Trig.kr(1);
+				// var ev;
 
 				bufnum = \bufnum.ir(0);
 				freq   = \freq.kr(440);
@@ -21,7 +21,7 @@
 				numFrames = max(BufFrames.ir(bufnum), 1);
 				phaseRate = rate * BufSampleRate.ir(bufnum);
 
-				ev = Line.kr(dur: \sustain.ir(1), doneAction: Done.freeSelf);
+				// ev = Line.kr(dur: \sustain.ir(1), doneAction: Done.freeSelf);
 
 				phase = Sweep.ar(1, phaseRate) 
 				      * rate
@@ -36,7 +36,7 @@
 				) * \amp.kr(1);
 
 				snd = BssPan.ar(snd, numChannels, \pan.kr(0));
-				OffsetOut.ar(\out.kr(0), snd);
+				Out.ar(\out.kr(0), snd);
 			}).add;
 
 		};
@@ -63,7 +63,7 @@
 				bssEvent.sendSynth(~instrument, [
 					bufnum: ~bufnum,
 					freq: ~freq,
-					sustain: ~sustain ? ~buffer.duration,
+					sustain: ~sustain ? ~duration ? ~buffer.duration,
 					begin: ~begin,
 					pan: ~pan,
 					amp: ~amp,

@@ -23,7 +23,7 @@ BssTrack {
 	initNodeTree {
 		server.makeBundle(nil, {
 			server.sendMsg("/g_new", group, 0, bss.group);
-			Synth.after(group, "bss_track_monitor_%ch".format(bss.numChannels), 
+			Synth.after(group, "bss_track_monitor" ++ bss.numChannels, 
 				[inBus: trackBus, outBus: outBus]
 			);
 		})
@@ -36,18 +36,20 @@ BssTrack {
 			~numChannels = bss.numChannels;
 			~track = this;
 
-			~tuning = #{ ~bss.tuning.current };
-			// ~scale = Scale.chromatic;
+
 			~octave = 5;
-			~note = #{ ~note ? 0 };
-			~midinote = #{ ~note.degreeToKey(~scale) + (12 * ~octave) };
+			~note = 0.0;
+			~scale = Scale.chromatic;
+			~midinote = #{ ~note.degreeToKey(~scale) + (12.0 * ~octave) };
 			~freq = #{ ~midinote.value.midicps };
 
-			~n = \none;
+			~n = 0;
 
 			~amp  = 1.0;
 			~rate = 1.0;
-			~dur  = 1.0;
+
+			~duration = 1.0;
+			~dur = 1.0;
 
 			~out = trackBus;
 		}

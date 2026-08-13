@@ -1,8 +1,7 @@
 (
 	var numChannels = ~bss.numChannels;
 
-	SynthDef("debug", { 
-		|out = -1, gate = -1, sustain = -1, amp = -1, freq = -1|
+	SynthDef("debug", { |out(-1), gate(-1), sustain(-1), amp(-1), freq(-1)|
 		var trig = Impulse.kr(0);
 		out.poll(trig, "out");
 		gate.poll(trig, "gate");
@@ -12,8 +11,7 @@
 		DC.kr(0).poll(trig, "\n");
 	}).add;
 
-	SynthDef("blip", { 
-		|out, sustain = 1, freq = 440, amp = 0.4|
+	SynthDef("blip", { |out, sustain(1), freq(440), amp(1)|
 		var snd, env;
 
 		snd = SinOsc.ar(freq) 
