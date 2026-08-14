@@ -128,7 +128,7 @@ BssSoundLibrary {
 			bufnum: buffer.bufnum,
 			buffer: buffer,
 			filename: buffer.path.basename,
-			instrument: this.prGetBufferInstrument(buffer),
+			instrument: this.getBufferSynth(buffer),
 			bufNumChannels: buffer.numChannels,
 			bufNumFrames: buffer.numFrames,
 			duration: buffer.duration,
@@ -137,9 +137,9 @@ BssSoundLibrary {
 		^event;
 	}
 
-	prGetBufferInstrument { |buffer|
+	getBufferSynth { |buffer|
 		^"bss_sampler" ++ buffer.numChannels;
-	}
+	};
 
 	getEvent { |name, index|
 		var event;
