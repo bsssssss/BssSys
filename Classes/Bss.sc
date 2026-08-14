@@ -10,7 +10,7 @@ Bss {
 		^super.newCopyArgs(
 			numChannels: numChannels ? 2,
 			server: server ? Server.default,
-			logLevel: logLevel ? \warning,
+			logLevel: logLevel ? \info,
 		).init;
 	}
 
@@ -33,7 +33,7 @@ Bss {
 		this.logger.formatter = { |item, log| 
             format("%% ", 
 				log.name.asString.toUpper,
-				(":" ++ item[\level].asString ++ ":").toUpper.padRight(10)
+				(":" ++ item[\level].asString ++ ":").toUpper
 			) ++ item[\string];
 		};
 	}
@@ -86,7 +86,7 @@ Bss {
 		};
 		paths.do { |p|
 			this.logger.info("loading synthdefs in %", p);
-			(bss:this).use { p.load };
+			(bss: this).use { p.load };
 		};
 	}
 
@@ -146,11 +146,7 @@ Bss {
 	}
 
 	show {
-		// "\n=== Status ===".postln;
-		"\n=== Sound Library ===".postln;
 		soundLibrary.show;
-		"\n=== Tracks ===".postln;
-		tracks.do { |t| t.show };
 	}
 
 	/*

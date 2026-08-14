@@ -172,7 +172,7 @@ BssSoundLibrary {
 	}
 
 	show {
+		"*** Sound Library ***".postln;
 		this.showSoundFiles;
 	}
-
 }
