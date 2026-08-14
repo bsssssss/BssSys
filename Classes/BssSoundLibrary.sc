@@ -139,7 +139,7 @@ BssSoundLibrary {
 
 	getBufferSynth { |buffer|
 		^"bss_sampler" ++ buffer.numChannels;
-	};
+	}
 
 	getEvent { |name, index|
 		var event;

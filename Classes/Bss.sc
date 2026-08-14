@@ -20,7 +20,7 @@ Bss {
 		group = server.nextPermNodeID;
 		soundLibrary = BssSoundLibrary(server, numChannels, this.logger);
 		tuning = BssTuning();
-		this.loadSynthDefs("../synths".resolveRelative);
+		this.loadSynthDefs("../lib".resolveRelative);
 		ServerTree.add(this, server);
 		"*** Bss Sonic System initialized ***".postln;
 	}
@@ -81,11 +81,9 @@ Bss {
 	// modules get added here as well
 	loadSynthDefs { |path|
 		var paths = pathMatch(standardizePath(path +/+ "*")).select(_.endsWith(".scd"));
-		if (paths.isNil) {
-			this.logger.warning("no .scd files in %", path) 
-		};
+		if (paths.isNil) { this.logger.warning("no .scd files in %", path) };
 		paths.do { |p|
-			this.logger.info("loading synthdefs in %", p);
+			this.logger.info("loading %", p.basename);
 			(bss: this).use { p.load };
 		};
 	}
