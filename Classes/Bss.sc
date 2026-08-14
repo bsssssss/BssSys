@@ -48,7 +48,7 @@ Bss {
 	initNodeTree {
 		server.sendMsg("/g_new", group, 0, 1);
 		outBusses.as(OrderedIdentitySet).do { |bus| // filter out duplicate busses
-			Synth.tail(group, "bss_output_monitor" ++ numChannels, 
+			Synth.after(group, "bss_output_monitor" ++ numChannels, 
 				[inBus: bus, outBus: bus]
 			);
 		};
