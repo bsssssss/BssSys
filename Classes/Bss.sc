@@ -4,7 +4,7 @@ Bss {
 	var <server, <numChannels, logLevel;
 	var <tracks, <outBusses, <group;
 	var <reaperProjectPath, <reaper;
-	var <modules, <soundLibrary, <tuning;
+	var <modules, <effectModules, <soundLibrary, <tuning;
 
 	*new {|numChannels, server, logLevel|
 		^super.newCopyArgs(
@@ -17,6 +17,7 @@ Bss {
 	init {
 		this.initLogger;
 		modules = [];
+		effectModules = IdentityDictionary();
 		group = server.nextPermNodeID;
 		soundLibrary = BssSoundLibrary(server, numChannels, this.logger);
 		tuning = BssTuning();
@@ -99,11 +100,23 @@ Bss {
 		module = BssModule(name, func, cond);
 
 		index = modules.indexOfEqual(module);
-		if (index.notNil) {
-			modules.put(index, module);
+
+		// module.debug("module");
+
+		if (index.isNil) {
+			modules = modules.add(module);
 		} {
-			modules.add(module);
+			modules.put(index, module);
 		};
+	}
+
+	addEffectModule { |name, func, cond|
+		var module, index;
+
+		name = name.asSymbol;
+		module = BssModule(name, func, cond);
+
+		effectModules[name] = module;
 	}
 
 	/*
@@ -124,7 +137,7 @@ Bss {
 
 		track = tracks @@ (event[\track] ? 0);
 
-		^BssEvent(track, modules, event).play
+		^BssEvent(track, effectModules, event).play
 	}
 
 	/*

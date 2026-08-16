@@ -1,8 +1,8 @@
 BssEvent {
-	var <track, <modules, <event;
+	var <track, <event, <effectModules, <effectChain;
 
-	*new { |track, modules, event|
-		^super.newCopyArgs(track, modules, event);
+	*new { |track, effectModules, event|
+		^super.newCopyArgs(track:track, effectModules:effectModules, event:event);
 	}
 
 	play {
@@ -10,6 +10,7 @@ BssEvent {
 		event.use {
 			this.mkSoundName;
 			this.mergeSoundEvent;
+			this.mkEffectChain;
 			this.playSynths;
 		};
 		^event;
@@ -36,8 +37,14 @@ BssEvent {
 		}
 	}
 
-	getMsgFunc { |instrument|
-		var msgFunc = SynthDescLib.global.synthDescs.at(instrument).msgFunc;
+	mkEffectChain {
+		effectChain = ~chain ? ~fx ? ~fxChain ? ~effects ? ~effectChain ? ~effectsChain;
+		effectChain = effectChain.select(_.notNil);
+		effectChain.postln;
+	}
+
+	getMsgFunc { |synthDefName|
+		var msgFunc = SynthDescLib.global.synthDescs.at(synthDefName).msgFunc;
 		if (msgFunc.notNil) {
 			^msgFunc;
 		} {
@@ -45,16 +52,60 @@ BssEvent {
 		};
 	}
 
+	makeSynthGroup { |outerGroup|
+		~synthGroup = Group(outerGroup ? track.group);
+	}
+
 	sendSynth { |instrument, args|
 		args = args ?? { this.getMsgFunc(instrument.asSymbol).valueEnvir }; // get synth arguments from event if nil
 		args.flop.do { |argList| 
-			Synth.tail(track.group, instrument, argList);
+			Synth.tail(~synthGroup, instrument, argList);
+		};
+	}
+
+	sendSourceSynth {
+		if (~buffer.notNil) {
+			this.sendSynth(~instrument, [
+				bufnum: ~bufnum,
+				freq: ~freq,
+				sustain: ~sustain ? ~duration ? ~buffer.duration,
+				begin: ~begin,
+				pan: ~pan,
+				amp: ~amp,
+				out: ~out,
+			]);
+		} {
+			if (~instrument.notNil) {
+				this.sendSynth(~instrument); // arguments are handled with msgFunc
+			} {
+				"no sound or synth named %, dropping event...".format(~s).warn
+			}
+		}
+	}
+
+	sendGateSynth {
+		^Synth.tail(~synthGroup, "bss_gate" ++ ~numChannels, [
+			in: track.synthBus,
+			out: track.trackBus,
+			sustain: ~sustain,
+		]);
+	}
+
+	sendEffectChain {
+		effectChain.do { |spec|
+			var name = spec[0].asSymbol;
+			var fxEvent = spec[1].asEvent;
+			fxEvent.parent = event;
+			fxEvent.use { effectModules[name].value(this) };
 		};
 	}
 
 	playSynths {
 		track.server.bind {
-			modules.do(_.value(this));
+			this.makeSynthGroup;
+			this.sendSourceSynth;
+			this.sendEffectChain;
+			this.sendGateSynth; // LAST
 		}
 	}
 
