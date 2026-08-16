@@ -18,16 +18,8 @@ BssEvent {
 
 	mkSoundName {
 		var sound = ~sound ? ~s;
-
-		if (~bank.notNil) {
-			sound = format("%_%", ~bank, sound) 
-		};
-
+		if (~bank.notNil) { sound = format("%_%", ~bank, sound) };
 		~s = sound.asSymbol;
-	}
-
-	mkSoundChain {
-		
 	}
 
 	mergeSoundEvent {
@@ -48,7 +40,7 @@ BssEvent {
 		if (msgFunc.notNil) {
 			^msgFunc;
 		} {
-			track.bss.logger.error( "(%): no msgFunc for instrument %", thisMethod, instrument);
+			track.bss.logger.error( "(%): no msgFunc for instrument %", thisMethod, synthDefName);
 		};
 	}
 
