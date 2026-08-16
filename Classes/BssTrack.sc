@@ -2,7 +2,7 @@ BssTrack {
 	var <bss, <server;
 	var <id, <>name;
 	var <group;
-	var <trackBus, <>outBus;
+	var <synthBus, <trackBus, <>outBus;
 	var <>defaultParentEvent;
 
 	*new { |bss, outBus, id|
@@ -14,7 +14,8 @@ BssTrack {
 		name   = "track %".format(id);
 		group  = server.nextPermNodeID;
 
-		trackBus = Bus.audio(bss.server, bss.numChannels);
+		synthBus = Bus.audio(server, bss.numChannels);
+		trackBus = Bus.audio(server, bss.numChannels);
 
 		this.initNodeTree;
 		this.makeDefaultParentEvent;
@@ -23,9 +24,7 @@ BssTrack {
 	initNodeTree {
 		server.makeBundle(nil, {
 			server.sendMsg("/g_new", group, 0, bss.group);
-			Synth.after(group, "bss_track_monitor" ++ bss.numChannels, 
-				[inBus: trackBus, outBus: outBus]
-			);
+			Synth.after(group, "bss_monitor" ++ bss.numChannels, [in: trackBus, out: outBus]);
 		})
 	}
 
@@ -36,7 +35,6 @@ BssTrack {
 			~numChannels = bss.numChannels;
 			~track = this;
 
-
 			~octave = 5;
 			~note = 0.0;
 			~scale = Scale.chromatic;
@@ -45,13 +43,17 @@ BssTrack {
 
 			~n = 0;
 
-			~amp  = 1.0;
+			~amp = 1.0;
 			~rate = 1.0;
 
-			~duration = 1.0;
-			~dur = 1.0;
+			~sustain = 1.0;
+			// ~duration = 1.0;
+			// ~dur = 1.0;
 
-			~out = trackBus;
+			~pan = 0.0;
+
+			~out = synthBus;
+			~trackBus = trackBus;
 		}
 	}
 

@@ -43,3 +43,20 @@ BssPan2 : UGen {
 		}
 	}
 }
+
+BssGrainEnv : UGen {
+	*ar { |tilt(0.5), hold(0.0), curveRise(0), curveFall(0), timeScale(1), doneAction(0)|
+		var rise, fall, factor;
+
+		factor = (1 - hold);
+		tilt = tilt.clip(0,1);
+		rise = tilt * factor;
+		fall = (1 - tilt) * factor;
+
+		^EnvGen.ar(
+			Env([0,1,1,0], [rise,hold,fall], [curveRise,0,curveFall]),
+			timeScale: timeScale,
+			doneAction: doneAction
+		);
+	}
+}

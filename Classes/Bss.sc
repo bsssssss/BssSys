@@ -4,7 +4,7 @@ Bss {
 	var <server, <numChannels, logLevel;
 	var <tracks, <outBusses, <group;
 	var <reaperProjectPath, <reaper;
-	var <modules, <soundLibrary, <tuning;
+	var <modules, <effectModules, <soundLibrary, <tuning;
 
 	*new {|numChannels, server, logLevel|
 		^super.newCopyArgs(
@@ -17,6 +17,7 @@ Bss {
 	init {
 		this.initLogger;
 		modules = [];
+		effectModules = IdentityDictionary();
 		group = server.nextPermNodeID;
 		soundLibrary = BssSoundLibrary(server, numChannels, this.logger);
 		tuning = BssTuning();
@@ -47,11 +48,7 @@ Bss {
 
 	initNodeTree {
 		server.sendMsg("/g_new", group, 0, 1);
-		outBusses.as(OrderedIdentitySet).do { |bus| // filter out duplicate busses
-			Synth.after(group, "bss_output_monitor" ++ numChannels, 
-				[inBus: bus, outBus: bus]
-			);
-		};
+		tracks.do(_.initNodeTree);
 	}
 
 	/*
@@ -86,6 +83,9 @@ Bss {
 			this.logger.info("loading %", p.basename);
 			(bss: this).use { p.load };
 		};
+
+		format("loaded % modules", modules.size).postln;
+		modules.do { |m| ("\t" ++ m.name).postln };
 	}
 
 	/*
@@ -97,13 +97,24 @@ Bss {
 
 		name = name.asSymbol;
 		module = BssModule(name, func, cond);
-
 		index = modules.indexOfEqual(module);
-		if (index.notNil) {
-			modules.put(index, module);
+
+		// module.debug("module");
+
+		if (index.isNil) {
+			modules = modules.add(module);
 		} {
-			modules.add(module);
+			modules.put(index, module);
 		};
+	}
+
+	addEffectModule { |name, func, cond|
+		var module, index;
+
+		name = name.asSymbol;
+		module = BssModule(name, func, cond);
+
+		effectModules[name] = module;
 	}
 
 	/*
@@ -124,7 +135,7 @@ Bss {
 
 		track = tracks @@ (event[\track] ? 0);
 
-		^BssEvent(track, modules, event).play
+		^BssEvent(track, effectModules, event).play
 	}
 
 	/*
@@ -209,6 +220,5 @@ Bss {
 
 	doOnServerTree {
 		this.initNodeTree;
-		tracks.do(_.initNodeTree);
 	}
 }

@@ -15,13 +15,26 @@
 		var snd, env;
 
 		snd = SinOsc.ar(freq) 
-			* Env.perc(\atk.kr(0.01), sustain).ar(Done.freeSelf)
+			* Env.perc(\atk.kr(0.01), sustain).ar
 		    * amp 
 			* AmpComp.ar(K2A.ar(freq), 20);
 
 		snd = snd ! numChannels;
 		snd = BssPan.ar(snd, numChannels, \pan.kr(0));
 
-		OffsetOut.ar(out, snd)
+		Out.ar(out, snd)
+	}).add;
+
+	SynthDef("bss_sine", { |out, sustain(1), freq(440), amp(1)|
+		var snd, env;
+
+		snd = SinOsc.ar(freq)
+		    * AmpComp.ar(K2A.ar(freq), 20)
+			* amp ;
+
+		snd = snd ! numChannels;
+		snd = BssPan.ar(snd, numChannels, \pan.kr(0));
+
+		Out.ar(out, snd)
 	}).add;
 )

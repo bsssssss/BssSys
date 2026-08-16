@@ -5,8 +5,8 @@ BssModule {
 		^this.newCopyArgs(name, func, cond ? true);
 	}
 
-	value { |bssEvent|
-		if (cond.value) { func.value(bssEvent) };
+	value { |event|
+		if (cond.value) { func.value(event) };
 	}
 
 	specs {
