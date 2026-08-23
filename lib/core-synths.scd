@@ -33,7 +33,7 @@
 
 	(1..Bss.maxSoundFileNumChannels).do { |soundFileNumChannels|
 
-		SynthDef("bss_sampler" ++ soundFileNumChannels, {
+		SynthDef("bss_sampler_bufrd" ++ soundFileNumChannels, {
 			var snd, phase, bufnum, rate, freq, numFrames, phaseRate;
 			var trig = Trig.kr(1);
 
@@ -63,25 +63,18 @@
 		}).add;
 	};
 
-	// ~bss.addModule('sound', { |bssEvent|
-	// 	if (~buffer.notNil) {
-	// 		bssEvent.sendSynth(~instrument, [
-	// 			bufnum: ~bufnum,
-	// 			freq: ~freq,
-	// 			sustain: ~sustain ? ~duration ? ~buffer.duration,
-	// 			begin: ~begin,
-	// 			pan: ~pan,
-	// 			amp: ~amp,
-	// 			out: ~out,
-	// 		]);
-	// 	} {
-	// 		if (~instrument.notNil) {
-	// 			bssEvent.sendSynth(~instrument); // arguments are handled with msgFunc
-	// 		} {
-	// 			"no sound or synth named %, dropping event...".format(~s).warn
-	// 		}
-	// 	}
-	// });
+	~bss.addSamplerModule('bufrd', { |event|
+		event.sendSynth("bss_sampler_bufrd" ++ ~bufNumChannels, [
+			bufnum: ~bufnum,
+			begin: ~begin,
+			freq: ~freq,
+			rate: ~rate,
+			sustain: ~sustain ? ~buffer.duration,
+			pan: ~pan,
+			amp: ~amp,
+			out: ~out,
+		]);
+	});
 
 	/*
 	 * FX MODULES -

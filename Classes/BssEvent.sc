@@ -1,8 +1,12 @@
 BssEvent {
-	var <track, <event, <effectModules, <effectChain;
+	var <track, <event, <modules, <effectChain;
 
-	*new { |track, effectModules, event|
-		^super.newCopyArgs(track:track, effectModules:effectModules, event:event);
+	*new { |track, modules, event|
+		^super.newCopyArgs(
+			track: track,
+			modules: modules,
+			event: event
+		);
 	}
 
 	play {
@@ -56,21 +60,12 @@ BssEvent {
 	}
 
 	sendSourceSynth {
-		if (~buffer.notNil) {
-			this.sendSynth(~instrument, [
-				bufnum: ~bufnum,
-				freq: ~freq,
-				sustain: ~sustain ? ~duration ? ~buffer.duration,
-				begin: ~begin,
-				pan: ~pan,
-				amp: ~amp,
-				out: ~out,
-			]);
+		if (~buffer.notNil) { // buffer event from BssSoundLibrary 
+			var sampler = ~sampler ? "bufrd";
+			modules[\samplers][sampler.asSymbol].value(this);
 		} {
-			if (~instrument.notNil) {
+			if (~instrument.notNil) { // synthdesc event
 				this.sendSynth(~instrument); // arguments are handled with msgFunc
-			} {
-				"no sound or synth named %, dropping event...".format(~s).warn
 			}
 		}
 	}
@@ -88,7 +83,7 @@ BssEvent {
 			var name = spec[0].asSymbol;
 			var fxEvent = spec[1].asEvent;
 			fxEvent.parent = event;
-			fxEvent.use { effectModules[name].value(this) };
+			fxEvent.use { modules['effects'][name].value(this) };
 		};
 	}
 

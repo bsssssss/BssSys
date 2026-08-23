@@ -3,8 +3,9 @@ Bss {
 
 	var <server, <numChannels, logLevel;
 	var <tracks, <outBusses, <group;
+	var <modules, <effectModules, <samplerModules;
+	var <soundLibrary, <tuning;
 	var <reaperProjectPath, <reaper;
-	var <modules, <effectModules, <soundLibrary, <tuning;
 
 	*new {|numChannels, server, logLevel|
 		^super.newCopyArgs(
@@ -16,13 +17,18 @@ Bss {
 
 	init {
 		this.initLogger;
-		modules = [];
+
+		modules = IdentityDictionary();
 		effectModules = IdentityDictionary();
+		samplerModules = IdentityDictionary();
+
 		group = server.nextPermNodeID;
 		soundLibrary = BssSoundLibrary(server, numChannels, this.logger);
 		tuning = BssTuning();
+
 		this.loadSynthDefs("../lib".resolveRelative);
 		ServerTree.add(this, server);
+
 		"*** Bss Sonic System initialized ***".postln;
 	}
 
@@ -84,37 +90,32 @@ Bss {
 			(bss: this).use { p.load };
 		};
 
-		format("loaded % modules", modules.size).postln;
-		modules.do { |m| ("\t" ++ m.name).postln };
+		modules.keysValuesDo { |k, v|
+			format("%: % modules", k, v.size).postln;
+			v.do { |module|
+				("\t" ++ module.name).postln;
+			};
+		};
 	}
 
 	/*
 	 * Modules
 	 */
 
-	addModule { |name, func, cond|
-		var module, index;
-
-		name = name.asSymbol;
-		module = BssModule(name, func, cond);
-		index = modules.indexOfEqual(module);
-
-		// module.debug("module");
-
-		if (index.isNil) {
-			modules = modules.add(module);
-		} {
-			modules.put(index, module);
-		};
-	}
-
 	addEffectModule { |name, func, cond|
 		var module, index;
-
 		name = name.asSymbol;
 		module = BssModule(name, func, cond);
-
 		effectModules[name] = module;
+		modules['effects'] = effectModules;
+	}
+
+	addSamplerModule { |name, func, cond|
+		var module, index;
+		name = name.asSymbol;
+		module = BssModule(name, func, cond);
+		samplerModules[name] = module;
+		modules['samplers'] = samplerModules;
 	}
 
 	/*
@@ -123,7 +124,7 @@ Bss {
 
 	play { |...args, kwargs|
 		var track, event = ();
-		
+
 		if (args.size > 0 and: {args[0].isKindOf(Event)}) {
 			event = args[0];
 		};
@@ -135,7 +136,29 @@ Bss {
 
 		track = tracks @@ (event[\track] ? 0);
 
-		^BssEvent(track, effectModules, event).play
+		BssEvent(track, modules, event).play
+	}
+
+	playSynth { |name, args = #[], fxChain = #[]|
+		var events, track;
+		args.flop.do { |a|
+			var event;
+			a = a ++ [s: name.asSymbol] ++ [chain: fxChain];
+			event = a.asEvent;
+			track = tracks.wrapAt(event[\track] ? 0);
+			BssEvent(track, modules, event).playSynth
+		};
+	}
+
+	playBuf { |name, args = #[], fxChain = #[]|
+		var events, track;
+		args.flop.do { |a|
+			var event;
+			a = a ++ [s: name.asSymbol] ++ [chain: fxChain];
+			event = a.asEvent;
+			track = tracks.wrapAt(event[\track] ? 0);
+			BssEvent(track, modules, event).playBuf
+		};
 	}
 
 	/*
