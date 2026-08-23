@@ -14,6 +14,10 @@ BssSoundLibrary {
 		banks = IdentityDictionary();
 	}
 
+	/*
+	 * SOUND FILES
+	 */
+
 	loadSoundFilesToBank { |paths, bankName, namingFunc, append(false)|
 		var form = "%_%";
 		if (bankName.isNil) { logger.error("need a bank name") };
@@ -101,17 +105,28 @@ BssSoundLibrary {
 		^BssBuffer.readWithInfo(server, path, onlyHeader: doNotReadYet);
 	}
 
+
+	/*
+	 * Set
+	 */
+
 	addBuffer { |buffer, name, append(false)|
 		var event;
-		if (name.isNil)   { logger.error("need a name"); ^nil };
+
 		if (buffer.isNil) { logger.error("buffer is nil"); ^nil };
+		if (name.isNil) { logger.error("need a name"); ^nil };
 
 		name = name.asSymbol;
+
 		if (buffers[name].notNil and: { append.not }) {
 			logger.info("% is already registered, replacing...", name);
 			this.freeSoundFiles(name);
 		};
-		if (buffers[name].isNil) { logger.debug("adding buffers entry: %", name) };
+
+		if (buffers[name].isNil) { 
+			logger.debug("adding buffers entry: %", name) 
+		};
+
 		buffers[name] = buffers[name].add(buffer);
 		event = this.makeBufferEvent(buffer);
 		bufferEvents[name] = bufferEvents[name].add(event);
@@ -135,31 +150,40 @@ BssSoundLibrary {
 		^event;
 	}
 
-	getBufferEvent { |name, index|
-		var events = this.at(name);
-		if (events.notNil) {
-			^events.wrapAt(index.asInteger) 
-		} { ^nil };
-	}
 
-	// getEvent { |name, index|
-	// 	var event;
-	// 	var bufferEvents = this.at(name);
-	// 	if (bufferEvents.isNil) { // could it be a synth ??
-	// 		if (SynthDescLib.at(name.asSymbol).notNil) {
-	// 			^event = (instrument: name.asSymbol);
-	// 		} {
-	// 			logger.error("(%): no synth or sample named % in SynthDescLib", thisMethod, name);
-	// 			^nil;
-	// 		};
-	// 	} { // it's a buffer event
-	// 		^bufferEvents.wrapAt(index.asInteger);
-	// 	};
-	// }
+	/*
+	 * Get
+	 */
 
 	at { |name| 
 		^bufferEvents[name];
 	}
+
+	getSynthEvent { |name|
+		var event, synthDesc;
+		name = name.asSymbol;
+		synthDesc = SynthDescLib.at(name);
+		if (synthDesc.notNil) { ^(instrument: name) } { ^nil };
+	}
+
+	getBufferEvent { |name, index|
+		var events = this.at(name.asSymbol);
+		if (events.notNil) { ^events.wrapAt(index.asInteger) } { ^nil };
+	}
+
+	getEvent { |name, index| 
+		var event = this.getBufferEvent(name, index) ? this.getSynthEvent(name);
+		if (event.isNil) {
+			logger.error("no synth/sounds named % in library", ~sound);
+		} {
+			^event;
+		};
+	}
+
+
+	/*
+	 * Show
+	 */
 
 	showSoundFiles {
 		if (buffers.size == 0) {

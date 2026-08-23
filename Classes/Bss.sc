@@ -122,43 +122,10 @@ Bss {
 	 * Events
 	 */
 
-	play { |...args, kwargs|
-		var track, event = ();
-
-		if (args.size > 0 and: {args[0].isKindOf(Event)}) {
-			event = args[0];
-		};
-
-		// allow `bss.play(freq: 666, amp: 0.2)`
-		kwargs.pairsDo { |k,v|
-			event[k] = v;
-		};
-
-		track = tracks @@ (event[\track] ? 0);
-
-		BssEvent(track, modules, event).play
-	}
-
-	playSynth { |name, args = #[], fxChain = #[]|
-		var events, track;
-		args.flop.do { |a|
-			var event;
-			a = a ++ [s: name.asSymbol] ++ [chain: fxChain];
-			event = a.asEvent;
-			track = tracks.wrapAt(event[\track] ? 0);
-			BssEvent(track, modules, event).playSynth
-		};
-	}
-
-	playBuf { |name, args = #[], fxChain = #[]|
-		var events, track;
-		args.flop.do { |a|
-			var event;
-			a = a ++ [s: name.asSymbol] ++ [chain: fxChain];
-			event = a.asEvent;
-			track = tracks.wrapAt(event[\track] ? 0);
-			BssEvent(track, modules, event).playBuf
-		};
+	ev { |...args, kwargs|
+		var event = ();
+		kwargs.pairsDo { |k, v| event[k] = v };
+		^BssEvent(this, event);
 	}
 
 	/*

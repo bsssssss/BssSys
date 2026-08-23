@@ -1,71 +1,64 @@
 BssEvent {
-	var <track, <event, <modules, <effectChain;
+	var <bss, <event;
+	var <track, <effectChain;
 
-	*new { |track, modules, event|
-		^super.newCopyArgs(
-			track: track,
-			modules: modules,
-			event: event
-		);
+	*new { |bss, event|
+		^super.newCopyArgs(bss:bss, event:event).init;
+	}
+
+	init {
+		track = bss.tracks.wrapAt(event[\track] ? 0);
 	}
 
 	play {
 		event.parent = track.defaultParentEvent;
 		event.use {
-			this.mkSoundName;
-			this.mergeSoundEvent;
+			this.resolveSoundName;
+			this.resolveProtoEvent;
 			this.mkEffectChain;
 			this.playSynths;
 		};
-		^event;
+		^this;
 	}
 
 	playSynth {
 		event.parent = track.defaultParentEvent;
 		event.use {
-			this.mkSoundName;
-			this.mergeSynthEvent;
+			this.resolveSoundName;
+			this.resolveSynthEvent;
 			this.mkEffectChain;
 			this.playSynths;
 		};
-		^event;
+		^this;
 	}
 
 	playBuf {
 		event.parent = track.defaultParentEvent;
 		event.use {
-			this.mkSoundName;
-			this.mergeBufferEvent;
+			this.resolveSoundName;
+			this.resolveBufferEvent;
 			this.mkEffectChain;
 			this.playSynths;
 		};
-		^event;
+		^this;
 	}
 
-	mkSoundName {
+	resolveSoundName {
 		var sound = ~s ? ~sound;
 		if (~bank.notNil) { sound = format("%_%", ~bank, sound) };
 		~sound = sound.asSymbol;
 	}
 
-	mergeSoundEvent {
-		var event = this.mergeBufferEvent ? this.mergeSynthEvent;
-		if (event.isNil) { track.bss.logger.error("no synth/sample named %", ~sound) };
+	resolveProtoEvent {
+		currentEnvironment.proto = bss.soundLibrary.getEvent(~sound, ~n);
 	}
 
-	mergeBufferEvent {
-		var event = track.bss.soundLibrary.getBufferEvent(~sound, ~n);
-		if (event.notNil) {
-			currentEnvironment.proto = event 
-		} { ^nil };
+	resolveBufferEvent {
+		currentEnvironment.proto = bss.soundLibrary.getBufferEvent(~sound, ~n);
 	}
 
-	mergeSynthEvent {
-		var event, synthDesc;
-		synthDesc = SynthDescLib.at(~sound);
-		if (synthDesc.notNil) {
-			currentEnvironment.proto = (instrument: ~sound) 
-		} { ^nil };
+	resolveSynthEvent {
+		currentEnvironment.proto = bss.soundLibrary.getSynthEvent(~sound);
 	}
 
 	mkEffectChain {
@@ -96,7 +89,7 @@ BssEvent {
 	sendSourceSynth {
 		if (~buffer.notNil) { // buffer event from BssSoundLibrary 
 			var sampler = ~sampler ? "bufrd";
-			modules[\samplers][sampler.asSymbol].value(this);
+			bss.modules[\samplers][sampler.asSymbol].value(this);
 		} {
 			if (~instrument.notNil) { // synthdesc event
 				this.sendSynth(~instrument); // arguments are handled with msgFunc
@@ -117,7 +110,7 @@ BssEvent {
 			var name = spec[0].asSymbol;
 			var fxEvent = spec[1].asEvent;
 			fxEvent.parent = event;
-			fxEvent.use { modules['effects'][name].value(this) };
+			fxEvent.use { bss.modules['effects'][name].value(this) };
 		};
 	}
 
