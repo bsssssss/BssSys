@@ -1,6 +1,6 @@
 BssEvent {
 	var <bss, <event;
-	var <track, <effectChain;
+	var <track, <>effectChain;
 
 	*new { |bss, event|
 		^super.newCopyArgs(bss:bss, event:event).init;
@@ -8,36 +8,35 @@ BssEvent {
 
 	init {
 		track = bss.tracks.wrapAt(event[\track] ? 0);
+		event.parent = track.defaultParentEvent;
+	}
+
+	fx { |specArray| 
+		effectChain = specArray;
 	}
 
 	play {
-		event.parent = track.defaultParentEvent;
 		event.use {
 			this.resolveSoundName;
-			this.resolveProtoEvent;
-			this.mkEffectChain;
+			this.resolveSoundEvent;
 			this.playSynths;
 		};
 		^this;
 	}
 
 	playSynth {
-		event.parent = track.defaultParentEvent;
 		event.use {
 			this.resolveSoundName;
 			this.resolveSynthEvent;
-			this.mkEffectChain;
 			this.playSynths;
 		};
 		^this;
 	}
 
 	playBuf {
-		event.parent = track.defaultParentEvent;
 		event.use {
 			this.resolveSoundName;
 			this.resolveBufferEvent;
-			this.mkEffectChain;
 			this.playSynths;
 		};
 		^this;
@@ -49,7 +48,7 @@ BssEvent {
 		~sound = sound.asSymbol;
 	}
 
-	resolveProtoEvent {
+	resolveSoundEvent {
 		currentEnvironment.proto = bss.soundLibrary.getEvent(~sound, ~n);
 	}
 
@@ -61,17 +60,12 @@ BssEvent {
 		currentEnvironment.proto = bss.soundLibrary.getSynthEvent(~sound);
 	}
 
-	mkEffectChain {
-		effectChain = ~fx ? ~chain ? ~fxChain ? ~effects ? ~effectChain ? ~effectsChain;
-		effectChain = effectChain.select(_.notNil);
-	}
-
-	getMsgFunc { |synthDefName|
-		var msgFunc = SynthDescLib.global.synthDescs.at(synthDefName).msgFunc;
+	getMsgFunc { |intrument|
+		var msgFunc = SynthDescLib.global.synthDescs.at(intrument).msgFunc;
 		if (msgFunc.notNil) {
 			^msgFunc;
 		} {
-			track.bss.logger.error( "(%): no msgFunc for instrument %", thisMethod, synthDefName);
+			bss.logger.error( "(%): no msgFunc for instrument %", thisMethod, intrument);
 		};
 	}
 
@@ -80,9 +74,9 @@ BssEvent {
 	}
 
 	sendSynth { |instrument, args|
-		args = args ?? { this.getMsgFunc(instrument.asSymbol).valueEnvir }; // get synth arguments from event if nil
-		args.flop.do { |argList| 
-			Synth.tail(~synthGroup, instrument, argList);
+		args = args ?? { this.getMsgFunc(instrument.asSymbol).valueEnvir };
+		args.flop.do { |argList|
+			Synth.tail(~synthGroup, instrument, argList) 
 		};
 	}
 
@@ -110,7 +104,9 @@ BssEvent {
 			var name = spec[0].asSymbol;
 			var fxEvent = spec[1].asEvent;
 			fxEvent.parent = event;
-			fxEvent.use { bss.modules['effects'][name].value(this) };
+			fxEvent.use {
+				bss.modules['effects'][name].value(this) 
+			};
 		};
 	}
 
