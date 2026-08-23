@@ -43,9 +43,9 @@ BssEvent {
 	}
 
 	mkSoundName {
-		var sound = ~sound ? ~s;
+		var sound = ~s ? ~sound;
 		if (~bank.notNil) { sound = format("%_%", ~bank, sound) };
-		~s = sound.asSymbol;
+		~sound = sound.asSymbol;
 	}
 
 	mergeSoundEvent {
@@ -69,9 +69,8 @@ BssEvent {
 	}
 
 	mkEffectChain {
-		effectChain = ~chain ? ~fx ? ~fxChain ? ~effects ? ~effectChain ? ~effectsChain;
+		effectChain = ~fx ? ~chain ? ~fxChain ? ~effects ? ~effectChain ? ~effectsChain;
 		effectChain = effectChain.select(_.notNil);
-		effectChain.postln;
 	}
 
 	getMsgFunc { |synthDefName|
