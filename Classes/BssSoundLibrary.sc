@@ -133,7 +133,7 @@ BssSoundLibrary {
 	}
 
 	addBank { |name|
-		if (name.isNil) { logger.error("bank name is nil") };
+		if (name.isNil) { logger.error("need a bank name") };
 		name = name.asSymbol;
 		banks[name] = banks[name].add(name);
 	}
