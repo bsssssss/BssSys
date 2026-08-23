@@ -128,33 +128,34 @@ BssSoundLibrary {
 			bufnum: buffer.bufnum,
 			buffer: buffer,
 			filename: buffer.path.basename,
-			instrument: this.getBufferSynth(buffer),
 			bufNumChannels: buffer.numChannels,
 			bufNumFrames: buffer.numFrames,
 			duration: buffer.duration,
 		);
-		logger.debug("made event for %: %", buffer.path.basename, event);
 		^event;
 	}
 
-	getBufferSynth { |buffer|
-		^"bss_sampler" ++ buffer.numChannels;
+	getBufferEvent { |name, index|
+		var events = this.at(name);
+		if (events.notNil) {
+			^events.wrapAt(index.asInteger) 
+		} { ^nil };
 	}
 
-	getEvent { |name, index|
-		var event;
-		var evs = this.at(name);
-		if (evs.isNil) { // could it be a synth ??
-			if (SynthDescLib.at(name.asSymbol).notNil) {
-				^event = (instrument: name.asSymbol);
-			} {
-				logger.error("(%): no synth or sample named % in SynthDescLib", thisMethod, name);
-				^nil;
-			};
-		} { // it's a buffer event
-			^evs.wrapAt(index.asInteger);
-		};
-	}
+	// getEvent { |name, index|
+	// 	var event;
+	// 	var bufferEvents = this.at(name);
+	// 	if (bufferEvents.isNil) { // could it be a synth ??
+	// 		if (SynthDescLib.at(name.asSymbol).notNil) {
+	// 			^event = (instrument: name.asSymbol);
+	// 		} {
+	// 			logger.error("(%): no synth or sample named % in SynthDescLib", thisMethod, name);
+	// 			^nil;
+	// 		};
+	// 	} { // it's a buffer event
+	// 		^bufferEvents.wrapAt(index.asInteger);
+	// 	};
+	// }
 
 	at { |name| 
 		^bufferEvents[name];
