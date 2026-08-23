@@ -20,6 +20,28 @@ BssEvent {
 		^event;
 	}
 
+	playSynth {
+		event.parent = track.defaultParentEvent;
+		event.use {
+			this.mkSoundName;
+			this.mergeSynthEvent;
+			this.mkEffectChain;
+			this.playSynths;
+		};
+		^event;
+	}
+
+	playBuf {
+		event.parent = track.defaultParentEvent;
+		event.use {
+			this.mkSoundName;
+			this.mergeBufferEvent;
+			this.mkEffectChain;
+			this.playSynths;
+		};
+		^event;
+	}
+
 	mkSoundName {
 		var sound = ~sound ? ~s;
 		if (~bank.notNil) { sound = format("%_%", ~bank, sound) };
@@ -27,10 +49,23 @@ BssEvent {
 	}
 
 	mergeSoundEvent {
-		var soundEvent = track.bss.soundLibrary.getEvent(~s, ~n);
-		if (soundEvent.notNil) {
-			currentEnvironment.proto = soundEvent;
-		}
+		var event = this.mergeBufferEvent ? this.mergeSynthEvent;
+		if (event.isNil) { track.bss.logger.error("no synth/sample named %", ~sound) };
+	}
+
+	mergeBufferEvent {
+		var event = track.bss.soundLibrary.getBufferEvent(~sound, ~n);
+		if (event.notNil) {
+			currentEnvironment.proto = event 
+		} { ^nil };
+	}
+
+	mergeSynthEvent {
+		var event, synthDesc;
+		synthDesc = SynthDescLib.at(~sound);
+		if (synthDesc.notNil) {
+			currentEnvironment.proto = (instrument: ~sound) 
+		} { ^nil };
 	}
 
 	mkEffectChain {
