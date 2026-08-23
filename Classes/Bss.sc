@@ -230,15 +230,19 @@ Bss {
 	 * Startup
 	 */
 
-	start { |busArray, withReaper = false|
+	start { |busArray([0]), withReaper = false|
 		if (busArray.isNil) {
 			outBusses = [0];
 		} {
 			outBusses = busArray.asArray;
 		};
+
 		this.initNodeTree;
 		this.mkTracks;
+
 		if (withReaper) { this.mkReaperProject };
+
+		^this;
 	}
 
 	doOnServerTree {
