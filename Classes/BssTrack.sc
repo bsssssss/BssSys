@@ -44,12 +44,7 @@ BssTrack {
 			~n = 0;
 
 			~amp = 1.0;
-			~rate = 1.0;
-
 			~sustain = 1.0;
-			// ~duration = 1.0;
-			// ~dur = 1.0;
-
 			~pan = 0.0;
 
 			~out = synthBus;
