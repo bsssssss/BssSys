@@ -24,7 +24,10 @@ BssTrack {
 	initNodeTree {
 		server.makeBundle(nil, {
 			server.sendMsg("/g_new", group, 0, bss.group);
-			Synth.after(group, "bss_monitor" ++ bss.numChannels, [in: trackBus, out: outBus]);
+			Synth.after(group, "bss_monitor" ++ bss.numChannels, [
+				in: trackBus,
+				out: outBus
+			]);
 		})
 	}
 
@@ -50,9 +53,5 @@ BssTrack {
 			~out = synthBus;
 			~trackBus = trackBus;
 		}
-	}
-
-	play { |event|
-		BssEvent(this, bss.modules, event).play;
 	}
 }

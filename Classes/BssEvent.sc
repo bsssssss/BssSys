@@ -1,6 +1,6 @@
 BssEvent {
 	var <bss, <event;
-	var <track, <>effectChain;
+	var <track, <>effectChain, <>method;
 
 	*new { |bss, event|
 		^super.newCopyArgs(bss:bss, event:event).init;
@@ -8,56 +8,38 @@ BssEvent {
 
 	init {
 		track = bss.tracks.wrapAt(event[\track] ? 0);
+	}
+
+	play { |method(\auto)|
 		event.parent = track.defaultParentEvent;
-	}
-
-	fx { |specArray| 
-		effectChain = specArray;
-	}
-
-	play {
 		event.use {
 			this.resolveSoundName;
-			this.resolveSoundEvent;
+			this.resolveProtoEvent;
 			this.playSynths;
 		};
 		^this;
 	}
 
-	playSynth {
-		event.use {
-			this.resolveSoundName;
-			this.resolveSynthEvent;
-			this.playSynths;
-		};
-		^this;
-	}
-
-	playBuf {
-		event.use {
-			this.resolveSoundName;
-			this.resolveBufferEvent;
-			this.playSynths;
-		};
+	fx { |specs| 
+		effectChain = specs;
 		^this;
 	}
 
 	resolveSoundName {
 		var sound = ~s ? ~sound;
-		if (~bank.notNil) { sound = format("%_%", ~bank, sound) };
+		if (~bank.notNil) {
+			sound = format("%_%", ~bank, sound) 
+		};
 		~sound = sound.asSymbol;
 	}
 
-	resolveSoundEvent {
-		currentEnvironment.proto = bss.soundLibrary.getEvent(~sound, ~n);
-	}
-
-	resolveBufferEvent {
-		currentEnvironment.proto = bss.soundLibrary.getBufferEvent(~sound, ~n);
-	}
-
-	resolveSynthEvent {
-		currentEnvironment.proto = bss.soundLibrary.getSynthEvent(~sound);
+	resolveProtoEvent {
+		var event = bss.soundLibrary.getEvent(~sound, ~n, method);
+		if (event.isNil) {
+			"no sound % in library".format(~sound).error;
+		} {
+			currentEnvironment.proto = event;
+		};
 	}
 
 	getMsgFunc { |intrument|
@@ -69,7 +51,7 @@ BssEvent {
 		};
 	}
 
-	makeSynthGroup { |outerGroup|
+	createSynthGroup { |outerGroup|
 		~synthGroup = Group(outerGroup ? track.group);
 	}
 
@@ -112,7 +94,7 @@ BssEvent {
 
 	playSynths {
 		track.server.bind {
-			this.makeSynthGroup;
+			this.createSynthGroup;
 			this.sendSourceSynth;
 			this.sendEffectChain;
 			this.sendGateSynth; // LAST

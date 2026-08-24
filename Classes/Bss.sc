@@ -125,12 +125,23 @@ Bss {
 	 * Events
 	 */
 
-	ev { |...args, kwargs|
+	snd { |...args, kwargs|
 		var event = ();
 		kwargs.pairsDo { |k, v| event[k] = v };
-		^BssEvent(this, event);
+		^BssEvent(this, event).method_(\auto);
 	}
 
+	syn { |...args, kwargs|
+		var event = ();
+		kwargs.pairsDo { |k, v| event[k] = v };
+		^BssEvent(this, event).method_(\synth);
+	}
+
+	buf { |...args, kwargs|
+		var event = ();
+		kwargs.pairsDo { |k, v| event[k] = v };
+		^BssEvent(this, event).method_(\buffer);
+	}
 
 	/*
 	 * Logging

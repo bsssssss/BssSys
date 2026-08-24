@@ -160,24 +160,26 @@ BssSoundLibrary {
 	}
 
 	getSynthEvent { |name|
-		var event, synthDesc;
+		var synthDesc;
 		name = name.asSymbol;
 		synthDesc = SynthDescLib.at(name);
-		if (synthDesc.notNil) { ^(instrument: name) } { ^nil };
+		if (synthDesc.isNil) { ^nil };
+		^(instrument: name) 
 	}
 
 	getBufferEvent { |name, index|
 		var events = this.at(name.asSymbol);
-		if (events.notNil) { ^events.wrapAt(index.asInteger) } { ^nil };
+		if (events.isNil) { ^nil };
+		^events.wrapAt(index.asInteger) 
 	}
 
-	getEvent { |name, index| 
-		var event = this.getBufferEvent(name, index) ? this.getSynthEvent(name);
-		if (event.isNil) {
-			logger.error("no synth/sounds named % in library", ~sound);
-		} {
-			^event;
-		};
+	getEvent { |name, index, method(\auto)| 
+		switch (method,
+			\auto,  { ^this.getBufferEvent(name, index) ? this.getSynthEvent(name) },
+			\synth, { ^this.getSynthEvent(name) },
+			\buffer, { ^this.getBufferEvent(name, index) },
+			{ "% is not a valid method, expecting 'auto'|'synth'|'buffer'".format(method).error };
+		)
 	}
 
 
