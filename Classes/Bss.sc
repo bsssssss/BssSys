@@ -82,6 +82,10 @@ Bss {
 		soundLibrary.loadSoundFile(path, name, append);
 	}
 
+	loadSoundFolder { |path, name, append(false)|
+		soundLibrary.loadSoundFolder(path, name, append);
+	}
+
 	// modules get added here as well
 	loadSynthDefs { |path|
 		var paths = pathMatch(standardizePath(path +/+ "*")).select(_.endsWith(".scd"));
