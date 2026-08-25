@@ -109,8 +109,8 @@
 
 	~bss.addEffectModule('gverb', #{ |bssEvent|
 		bssEvent.sendSynth("bss_gverb" ++ ~numChannels, [
-			roomsize: ~size,
-			revtime: ~decay,
+			roomsize: ~size ? 14,
+			revtime: ~decay ? 1,
 			sustain: ~sustain,
 			out: ~out,
 		])
