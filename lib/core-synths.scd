@@ -80,15 +80,15 @@
 	 * FX MODULES -
 	 */
 
-	SynthDef("bss_grain_env" ++ numChannels, { |out, sustain, tilt(0.5), hold(0), curveRise(0), curveFall(0)|
+	SynthDef("bss_tilt_env" ++ numChannels, { |out, sustain, tilt(0.5), hold(0), curveRise(0), curveFall(0)|
 		var sig;
 		sig = In.ar(out, numChannels);
 		sig = sig * BssGrainEnv.ar(tilt, hold, curveRise, curveFall, sustain);
 		ReplaceOut.ar(out, sig);
 	}, [\ir]).add;
 
-	~bss.addEffectModule('grain_env', #{ |event|
-		event.sendSynth("bss_grain_env" ++ ~numChannels, [
+	~bss.addEffectModule('tilt_env', #{ |bssEvent|
+		bssEvent.sendSynth("bss_tilt_env" ++ ~numChannels, [
 			tilt: ~tilt,
 			hold: ~hold,
 			curveRise: ~curveRise,

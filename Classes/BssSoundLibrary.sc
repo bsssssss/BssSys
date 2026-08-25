@@ -43,7 +43,7 @@ BssSoundLibrary {
 
 		logger.info("will load % folder%: %", folderPaths.size, if(folderPaths.size > 1, "s", ""), folderPaths);
 		folderPaths.do { |folderPath|
-			this.loadSoundFileFolder(folderPath, namingFunc.(folderPath), append);
+			this.loadSoundFolder(folderPath, namingFunc.(folderPath), append);
 		};
 	}
 
@@ -62,7 +62,7 @@ BssSoundLibrary {
 		};
 	}
 
-	loadSoundFileFolder { |folderPath, name, append(false)|
+	loadSoundFolder { |folderPath, name, append(false)|
 		var filePaths;
 
 		if (name.isNil) { logger.error("need a name"); ^nil };

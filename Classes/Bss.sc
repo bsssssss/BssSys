@@ -45,7 +45,7 @@ Bss {
 		};
 	}
 
-	mkTracks {
+	createTracks {
 		outBusses.do { |outBus, id|
 			var track = BssTrack(this, outBus, id);
 			tracks = tracks.add(track);
@@ -220,8 +220,7 @@ Bss {
 		};
 
 		this.initNodeTree;
-		this.mkTracks;
-
+		this.createTracks;
 		if (withReaper) { this.mkReaperProject };
 
 		^this;
