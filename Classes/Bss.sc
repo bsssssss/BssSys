@@ -129,20 +129,20 @@ Bss {
 	 * Events
 	 */
 
-	snd { |...args, kwargs|
-		var event = ();
+	snd { |name ...args, kwargs|
+		var event = (sound: name.asSymbol);
 		kwargs.pairsDo { |k, v| event[k] = v };
 		^BssEvent(this, event).method_(\auto);
 	}
 
-	syn { |...args, kwargs|
-		var event = ();
+	syn { |name ...args, kwargs|
+		var event = (sound: name.asSymbol);
 		kwargs.pairsDo { |k, v| event[k] = v };
 		^BssEvent(this, event).method_(\synth);
 	}
 
-	buf { |...args, kwargs|
-		var event = ();
+	buf { |name ...args, kwargs|
+		var event = (sound: name.asSymbol);
 		kwargs.pairsDo { |k, v| event[k] = v };
 		^BssEvent(this, event).method_(\buffer);
 	}
