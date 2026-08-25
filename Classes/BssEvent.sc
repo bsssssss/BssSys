@@ -17,12 +17,10 @@ BssEvent {
 			this.resolveProtoEvent;
 			this.playSynths;
 		};
-		^this;
 	}
 
 	fx { |specs| 
 		effectChain = specs;
-		^this;
 	}
 
 	resolveSoundName {
