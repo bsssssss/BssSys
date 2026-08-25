@@ -35,7 +35,6 @@
 
 		SynthDef("bss_sampler_bufrd" ++ soundFileNumChannels, {
 			var snd, phase, bufnum, rate, freq, numFrames, phaseRate;
-			var trig = Trig.kr(1);
 
 			bufnum = \bufnum.ir(0);
 			freq   = \freq.kr(440);
@@ -98,7 +97,7 @@
 		])
 	});
 
-	SynthDef("bss_gverb" ++ numChannels, { |out, sustain, roomsize(10), revtime(3)|
+	SynthDef("bss_gverb" ++ numChannels, { |out, sustain, roomsize(14), revtime(1.2)|
 		var sig;
 		var trig = Impulse.kr(0);
 
@@ -108,10 +107,10 @@
 		ReplaceOut.ar(out, sig);
 	}, [\ir]).add;
 
-	~bss.addEffectModule('gverb', #{ |event|
-		event.sendSynth("bss_gverb" ++ ~numChannels, [
-			roomsize: ~roomsize ? 10,
-			revtime: ~revtime ? 3,
+	~bss.addEffectModule('gverb', #{ |bssEvent|
+		bssEvent.sendSynth("bss_gverb" ++ ~numChannels, [
+			roomsize: ~size,
+			revtime: ~decay,
 			sustain: ~sustain,
 			out: ~out,
 		])
