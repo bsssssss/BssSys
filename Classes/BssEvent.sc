@@ -10,7 +10,7 @@ BssEvent {
 		track = bss.tracks.wrapAt(event[\track] ? 0);
 	}
 
-	play { |method(\auto)|
+	play {
 		event.parent = track.defaultParentEvent;
 		event.use {
 			this.resolveSoundName;
@@ -71,14 +71,6 @@ BssEvent {
 		}
 	}
 
-	sendGateSynth {
-		^Synth.tail(~synthGroup, "bss_gate" ++ ~numChannels, [
-			in: track.synthBus,
-			out: track.trackBus,
-			sustain: ~sustain,
-		]);
-	}
-
 	sendEffectChain {
 		effectChain.do { |spec|
 			var name = spec[0].asSymbol;
@@ -88,6 +80,14 @@ BssEvent {
 				bss.modules['effects'][name].value(this) 
 			};
 		};
+	}
+
+	sendGateSynth {
+		^Synth.tail(~synthGroup, "bss_gate" ++ ~numChannels, [
+			in: track.synthBus,
+			out: track.trackBus,
+			sustain: ~sustain,
+		]);
 	}
 
 	playSynths {
