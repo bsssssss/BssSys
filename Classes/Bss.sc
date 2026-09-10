@@ -5,6 +5,7 @@ Bss {
 	var <tracks, <outBusses, <group;
 	var <modules, <effectModules, <samplerModules;
 	var <soundLibrary, <tuning;
+	var <clock;
 	var <reaperProjectPath, <reaper;
 
 	*new {|numChannels, server, logLevel|
@@ -25,6 +26,7 @@ Bss {
 		group = server.nextPermNodeID;
 		soundLibrary = BssSoundLibrary(server, numChannels, this.logger);
 		tuning = BssTuning();
+		clock = TempoClock.new(60/60).permanent_(true);
 
 		this.loadSynthDefs("../lib".resolveRelative);
 		ServerTree.add(this, server);
