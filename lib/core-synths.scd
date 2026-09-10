@@ -19,6 +19,7 @@
 	// It is responsible for the time offset of the event and freeing the event's group.
 	// Synthdefs played through this system should only use Out.ar (no OffsetOut!)
 
+	// auto closing gate after <sustain> seconds
 	SynthDef("bss_gate_sustain" ++ numChannels, { |in, out, sustain, fadeIn(0), fadeOut(0.04)|
 		var sig, env;
 		sig = In.ar(in, numChannels);
@@ -28,6 +29,7 @@
 		ReplaceOut.ar(in, Silent.ar(numChannels)); // because their could be multiple parallel synths playing on the same bus
 	}, [\ir, \ir]).add;
 
+	// instanciated when sustain = inf, released by setting `gate` to 0 or calling `release(fadeTime)` on the event
 	SynthDef("bss_gate" ++ numChannels, { |in, out, gate(1), fadeIn(0), fadeOut(0.04)|
 		var sig, env;
 		sig = In.ar(in, numChannels);

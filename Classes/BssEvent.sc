@@ -1,6 +1,6 @@
 BssEvent {
 	var <bss, <event;
-	var <track, <>effectChain, <synths;
+	var <track, <>effectChain, <synths, <gateSynth;
 	var <>method;
 
 	*new { |bss, event|
@@ -11,15 +11,6 @@ BssEvent {
 		track = bss.tracks.wrapAt(event[\track] ? 0);
 		synths = [];
 		effectChain = [];
-	}
-
-	play {
-		event.parent = track.defaultParentEvent;
-		event.use {
-			this.resolveSoundName;
-			this.resolveProtoEvent;
-			this.playSynths;
-		};
 	}
 
 	fx { |name, args| 
@@ -95,7 +86,7 @@ BssEvent {
 			fadeIn: ~fadeIn ? 0,
 			fadeOut: ~fadeOut ? 0.04
 		]);
-		synths = synths.add(synth);
+		gateSynth = synth;
 	}
 
 	playSynths {
@@ -105,6 +96,39 @@ BssEvent {
 			this.sendEffectChain;
 			this.sendGateSynth; // LAST
 		}
+	}
+
+	play {
+		event.parent = track.defaultParentEvent;
+		event.use {
+			this.resolveSoundName;
+			this.resolveProtoEvent;
+			this.playSynths;
+		};
+	}
+
+	set { |...args|
+		args.pairsDo { |k,v| event.put(k,v) };
+		event.use {
+			synths.do { |synth|
+				var name = synth.defName;
+				bss.server.bind {
+					var msgFunc = this.getMsgFunc(name);
+					var args = msgFunc.valueEnvir.asControlInput;
+					synth.set(*args) 
+				};
+			};
+		};
+	}
+
+	release { |fadeTime|
+		var args = [\gate, 0];
+		if (fadeTime.notNil) {
+			args = args ++ [\fadeOut, fadeTime] 
+		};
+		bss.server.bind {
+			gateSynth.set(*args);
+		};
 	}
 
 	show { |event|
