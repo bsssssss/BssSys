@@ -58,8 +58,9 @@ BssEvent {
 
 	sendSynth { |instrument, args|
 		args = args ?? { this.getMsgFunc(instrument.asSymbol).valueEnvir };
-		args.flop.do { |argList|
-			Synth.tail(~synthGroup, instrument, argList) 
+		args.asControlInput.flop.do { |argList|
+			var synth = Synth.tail(~synthGroup, instrument, argList);
+			synths = synths.add(synth);
 		};
 	}
 
