@@ -1,7 +1,25 @@
 (
 	var numChannels = ~bss.numChannels;
 
-	SynthDef("bss_tilt_env" ++ numChannels, { |out, sustain, tilt(0.5), hold(0), curveRise(0), curveFall(0)|
+	SynthDef("bss_fade_env" ++ numChannels, {
+		|out, sustain, fadeIn(0.02), fadeOut(0.02)|
+		var sig, env;
+		sig = In.ar(out, numChannels);
+		env = Env([0,1,1,0], [fadeIn, sustain, fadeOut]).ar;
+		ReplaceOut.ar(out, sig * env);
+	}, [\ir]).add;
+
+	~bss.addEffectModule('fade_env', { |bssEvent|
+		bssEvent.sendSynth("bss_fade_env" ++ ~numChannels, [
+			fadeIn: ~fadeIn ? 0.02,
+			fadeOut: ~fadeOut ? 0.02,
+			sustain: ~sustain,
+			out: ~out,
+		])
+	});
+
+	SynthDef("bss_tilt_env" ++ numChannels, { 
+		|out, sustain, tilt(0.5), hold(0), curveRise(0), curveFall(0)|
 		var sig;
 		sig = In.ar(out, numChannels);
 		sig = sig * BssGrainEnv.ar(tilt, hold, curveRise, curveFall, sustain);
@@ -19,7 +37,8 @@
 		])
 	});
 
-	SynthDef("bss_gverb" ++ numChannels, { |out, sustain, roomsize(14), revtime(1.2)|
+	SynthDef("bss_gverb" ++ numChannels, { 
+		|out, sustain, roomsize(14), revtime(1.2)|
 		var sig;
 		var trig = Impulse.kr(0);
 
