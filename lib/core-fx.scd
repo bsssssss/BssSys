@@ -11,12 +11,13 @@
 
 	~bss.addEffectModule('fade_env', { |bssEvent|
 		bssEvent.sendSynth("bss_fade_env" ++ ~numChannels, [
-			fadeIn: ~fadeIn ? 0.02,
-			fadeOut: ~fadeOut ? 0.02,
+			fadeIn: ~fadeIn ? 0.01,
+			fadeOut: ~fadeOut ? 0.01,
 			sustain: ~sustain,
 			out: ~out,
 		])
 	});
+
 
 	SynthDef("bss_tilt_env" ++ numChannels, { 
 		|out, sustain, tilt(0.5), hold(0), curveRise(0), curveFall(0)|
@@ -36,6 +37,7 @@
 			out: ~out,
 		])
 	});
+
 
 	SynthDef("bss_gverb" ++ numChannels, { 
 		|out, sustain, roomsize(14), revtime(1.2)|
