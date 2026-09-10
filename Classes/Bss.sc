@@ -98,10 +98,12 @@ Bss {
 		};
 
 		modules.keysValuesDo { |k, v|
-			format("%: % modules", k, v.size).postln;
+			format("% (% modules)", k, v.size).postln;
+			"\t".post;
 			v.do { |module|
-				("\t" ++ module.name).postln;
+				module.name.post; ",".post
 			};
+			"".postln;
 		};
 	}
 
