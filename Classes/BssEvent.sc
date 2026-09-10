@@ -1,6 +1,7 @@
 BssEvent {
 	var <bss, <event;
-	var <track, <>effectChain, <>method;
+	var <track, <>effectChain, <synths;
+	var <>method;
 
 	*new { |bss, event|
 		^super.newCopyArgs(bss:bss, event:event).init;
@@ -8,6 +9,8 @@ BssEvent {
 
 	init {
 		track = bss.tracks.wrapAt(event[\track] ? 0);
+		synths = [];
+		effectChain = [];
 	}
 
 	play {
@@ -19,8 +22,8 @@ BssEvent {
 		};
 	}
 
-	fx { |specs| 
-		effectChain = specs;
+	fx { |name, args| 
+		effectChain = effectChain.add([name.asSymbol, args ? #[]]);
 	}
 
 	resolveSoundName {
