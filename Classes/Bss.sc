@@ -230,4 +230,8 @@ Bss {
 	doOnServerTree {
 		this.initNodeTree;
 	}
+
+	seq {
+		^BssSeq(this.clock);
+	}
 }
