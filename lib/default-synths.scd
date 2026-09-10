@@ -11,7 +11,7 @@
 		DC.kr(0).poll(trig, "\n");
 	}).add;
 
-	SynthDef("blip", { |out, sustain(1), freq(440), amp(1)|
+	SynthDef("bss_blip", { |out, sustain(1), freq(440), amp(1)|
 		var snd, env;
 
 		snd = SinOsc.ar(freq) 
@@ -25,10 +25,10 @@
 		Out.ar(out, snd)
 	}).add;
 
-	SynthDef("bss_sine", { |out, sustain(1), freq(440), amp(1)|
+	SynthDef("bss_sine", { |out, sustain(1), freq(440), amp(1), lag(0)|
 		var snd, env;
 
-		snd = SinOsc.ar(freq)
+		snd = SinOsc.ar(Lag.kr(freq, lag))
 		    * AmpComp.ar(K2A.ar(freq), 20)
 			* amp ;
 
