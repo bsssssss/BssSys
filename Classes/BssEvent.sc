@@ -87,11 +87,15 @@ BssEvent {
 	}
 
 	sendGateSynth {
-		^Synth.tail(~synthGroup, "bss_gate" ++ ~numChannels, [
+		var name = if (~sustain == inf, "bss_gate", "bss_gate_sustain");
+		var synth = Synth.tail(~synthGroup, name ++ ~numChannels, [
 			in: track.synthBus,
 			out: track.trackBus,
 			sustain: ~sustain,
+			fadeIn: ~fadeIn ? 0,
+			fadeOut: ~fadeOut ? 0.04
 		]);
+		synths = synths.add(synth);
 	}
 
 	playSynths {
