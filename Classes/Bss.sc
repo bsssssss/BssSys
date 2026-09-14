@@ -167,10 +167,6 @@ Bss {
 		this.logger.level = level;
 	}
 
-	show {
-		soundLibrary.show;
-	}
-
 	/*
 	 * Reaper
 	 */
@@ -220,8 +216,8 @@ Bss {
 	 * Startup
 	 */
 
-	start { |busArray([0]), withReaper = false|
-		outBusses = busArray.asArray;
+	start { |outBusses([0]), withReaper(false)|
+		outBusses = outBusses.asArray;
 		this.initNodeTree;
 		this.createTracks;
 		if (withReaper) { this.mkReaperProject };
@@ -231,7 +227,20 @@ Bss {
 		this.initNodeTree;
 	}
 
+	/*
+	 * Sequences
+	 */
+
 	seq {
 		^BssSeq(this.clock);
 	}
+
+	/*
+	 * Utils
+	 */
+
+	show {
+		soundLibrary.show;
+	}
+
 }
