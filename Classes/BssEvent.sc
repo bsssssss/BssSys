@@ -112,9 +112,9 @@ BssEvent {
 		event.use {
 			synths.do { |synth|
 				var name = synth.defName;
+				var msgFunc = this.getMsgFunc(name);
+				var args = msgFunc.valueEnvir.asControlInput;
 				bss.server.bind {
-					var msgFunc = this.getMsgFunc(name);
-					var args = msgFunc.valueEnvir.asControlInput;
 					synth.set(*args) 
 				};
 			};
