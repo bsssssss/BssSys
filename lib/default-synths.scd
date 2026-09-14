@@ -11,30 +11,41 @@
 		DC.kr(0).poll(trig, "\n");
 	}).add;
 
-	SynthDef("blip", { |out, sustain(1), freq(440), amp(1)|
+	SynthDef("bss_blip", { |out, sustain(1), freq(440), amp(1)|
 		var snd, env;
 
 		snd = SinOsc.ar(freq) 
 			* Env.perc(\atk.kr(0.01), sustain).ar
-		    * amp 
-			* AmpComp.ar(K2A.ar(freq), 20);
+			* AmpComp.ar(K2A.ar(freq), 20)
+		    * amp;
 
 		snd = snd ! numChannels;
 		snd = BssPan.ar(snd, numChannels, \pan.kr(0));
-
 		Out.ar(out, snd)
 	}).add;
 
-	SynthDef("bss_sine", { |out, sustain(1), freq(440), amp(1)|
+	SynthDef("bss_sine", { |out, sustain(1), freq(440), amp(1), lag(0)|
 		var snd, env;
+		freq = Lag.ar(K2A.ar(freq), lag);
 
-		snd = SinOsc.ar(freq)
-		    * AmpComp.ar(K2A.ar(freq), 20)
-			* amp ;
+		snd = SinOsc.ar(freq) 
+			* AmpComp.ar(freq, 20) 
+			* amp;
 
 		snd = snd ! numChannels;
 		snd = BssPan.ar(snd, numChannels, \pan.kr(0));
+		Out.ar(out, snd)
+	}).add;
 
+	SynthDef("bss_sine", { |out, sustain(1), freq(440), amp(1), lag(0)|
+		var snd, env;
+
+		snd = SinOsc.ar(Lag.kr(freq, lag)) 
+			* AmpComp.ar(K2A.ar(freq), 20) 
+			* amp;
+
+		snd = snd ! numChannels;
+		snd = BssPan.ar(snd, numChannels, \pan.kr(0));
 		Out.ar(out, snd)
 	}).add;
 )

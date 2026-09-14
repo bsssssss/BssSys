@@ -1,115 +1,69 @@
 BssEvent {
-	var <track, <event, <modules, <effectChain;
+	var <bss, <event;
+	var <track, <>effectChain, <synths, <gateSynth;
+	var <>method;
 
-	*new { |track, modules, event|
-		^super.newCopyArgs(
-			track: track,
-			modules: modules,
-			event: event
-		);
+	*new { |bss, event|
+		^super.newCopyArgs(bss:bss, event:event).init;
 	}
 
-	play {
-		event.parent = track.defaultParentEvent;
-		event.use {
-			this.mkSoundName;
-			this.mergeSoundEvent;
-			this.mkEffectChain;
-			this.playSynths;
-		};
-		^event;
+	init {
+		track = bss.tracks.wrapAt(event[\track] ? 0);
+		synths = [];
+		effectChain = [];
 	}
 
-	playSynth {
-		event.parent = track.defaultParentEvent;
-		event.use {
-			this.mkSoundName;
-			this.mergeSynthEvent;
-			this.mkEffectChain;
-			this.playSynths;
-		};
-		^event;
+	fx { |name, args| 
+		effectChain = effectChain.add([name.asSymbol, args ? #[]]);
 	}
 
-	playBuf {
-		event.parent = track.defaultParentEvent;
-		event.use {
-			this.mkSoundName;
-			this.mergeBufferEvent;
-			this.mkEffectChain;
-			this.playSynths;
-		};
-		^event;
-	}
-
-	mkSoundName {
+	resolveSoundName {
 		var sound = ~s ? ~sound;
-		if (~bank.notNil) { sound = format("%_%", ~bank, sound) };
+		if (~bank.notNil) {
+			sound = format("%_%", ~bank, sound) 
+		};
 		~sound = sound.asSymbol;
 	}
 
-	mergeSoundEvent {
-		var event = this.mergeBufferEvent ? this.mergeSynthEvent;
-		if (event.isNil) { track.bss.logger.error("no synth/sample named %", ~sound) };
-	}
-
-	mergeBufferEvent {
-		var event = track.bss.soundLibrary.getBufferEvent(~sound, ~n);
-		if (event.notNil) {
-			currentEnvironment.proto = event 
-		} { ^nil };
-	}
-
-	mergeSynthEvent {
-		var event, synthDesc;
-		synthDesc = SynthDescLib.at(~sound);
-		if (synthDesc.notNil) {
-			currentEnvironment.proto = (instrument: ~sound) 
-		} { ^nil };
-	}
-
-	mkEffectChain {
-		effectChain = ~fx ? ~chain ? ~fxChain ? ~effects ? ~effectChain ? ~effectsChain;
-		effectChain = effectChain.select(_.notNil);
-	}
-
-	getMsgFunc { |synthDefName|
-		var msgFunc = SynthDescLib.global.synthDescs.at(synthDefName).msgFunc;
-		if (msgFunc.notNil) {
-			^msgFunc;
+	resolveProtoEvent {
+		var event = bss.soundLibrary.getEvent(~sound, ~n, method);
+		if (event.isNil) {
+			"no sound % in library".format(~sound).error;
 		} {
-			track.bss.logger.error( "(%): no msgFunc for instrument %", thisMethod, synthDefName);
+			currentEnvironment.proto = event;
 		};
 	}
 
-	makeSynthGroup { |outerGroup|
+	getMsgFunc { |intrument|
+		var msgFunc = SynthDescLib.global.synthDescs.at(intrument).msgFunc;
+		if (msgFunc.notNil) {
+			^msgFunc;
+		} {
+			bss.logger.error( "(%): no msgFunc for instrument %", thisMethod, intrument);
+		};
+	}
+
+	createSynthGroup { |outerGroup|
 		~synthGroup = Group(outerGroup ? track.group);
 	}
 
 	sendSynth { |instrument, args|
-		args = args ?? { this.getMsgFunc(instrument.asSymbol).valueEnvir }; // get synth arguments from event if nil
-		args.flop.do { |argList| 
-			Synth.tail(~synthGroup, instrument, argList);
+		args = args ?? { this.getMsgFunc(instrument.asSymbol).valueEnvir };
+		args.asControlInput.flop.do { |argList|
+			var synth = Synth.tail(~synthGroup, instrument, argList);
+			synths = synths.add(synth);
 		};
 	}
 
 	sendSourceSynth {
-		if (~buffer.notNil) { // buffer event from BssSoundLibrary 
+		if (~buffer.notNil) { 
 			var sampler = ~sampler ? "bufrd";
-			modules[\samplers][sampler.asSymbol].value(this);
+			bss.modules[\samplers][sampler.asSymbol].value(this);
 		} {
-			if (~instrument.notNil) { // synthdesc event
-				this.sendSynth(~instrument); // arguments are handled with msgFunc
+			if (~instrument.notNil) {
+				this.sendSynth(~instrument);
 			}
 		}
-	}
-
-	sendGateSynth {
-		^Synth.tail(~synthGroup, "bss_gate" ++ ~numChannels, [
-			in: track.synthBus,
-			out: track.trackBus,
-			sustain: ~sustain,
-		]);
 	}
 
 	sendEffectChain {
@@ -117,17 +71,64 @@ BssEvent {
 			var name = spec[0].asSymbol;
 			var fxEvent = spec[1].asEvent;
 			fxEvent.parent = event;
-			fxEvent.use { modules['effects'][name].value(this) };
+			fxEvent.use {
+				bss.modules[\effects][name].value(this) 
+			};
 		};
+	}
+
+	sendGateSynth {
+		var name = if (~sustain == inf, "bss_gate", "bss_gate_sustain");
+		var synth = Synth.tail(~synthGroup, name ++ ~numChannels, [
+			in: track.synthBus,
+			out: track.trackBus,
+			sustain: ~sustain,
+			fadeIn: ~fadeIn ? 0,
+			fadeOut: ~fadeOut ? 0.04
+		]);
+		gateSynth = synth;
 	}
 
 	playSynths {
 		track.server.bind {
-			this.makeSynthGroup;
+			this.createSynthGroup;
 			this.sendSourceSynth;
 			this.sendEffectChain;
 			this.sendGateSynth; // LAST
 		}
+	}
+
+	play {
+		event.parent = track.defaultParentEvent;
+		event.use {
+			this.resolveSoundName;
+			this.resolveProtoEvent;
+			this.playSynths;
+		};
+	}
+
+	set { |...args|
+		args.pairsDo { |k,v| event.put(k,v) };
+		event.use {
+			synths.do { |synth|
+				var name = synth.defName;
+				var msgFunc = this.getMsgFunc(name);
+				var args = msgFunc.valueEnvir.asControlInput;
+				bss.server.bind {
+					synth.set(*args) 
+				};
+			};
+		};
+	}
+
+	release { |fadeTime|
+		var args = [\gate, 0];
+		if (fadeTime.notNil) {
+			args = args ++ [\fadeOut, fadeTime] 
+		};
+		bss.server.bind {
+			gateSynth.set(*args);
+		};
 	}
 
 	show { |event|

@@ -2,7 +2,7 @@
 	var numChannels = ~bss.numChannels;
 
 	/*
-	 * STATIC - These are instanciated at startup time
+	 * These are instanciated at startup time
 	 */
 
 	SynthDef("bss_monitor" ++ numChannels, {
@@ -12,16 +12,37 @@
 	}).add;
 
 	/*
-	 * SOUND MODULES - These are instanciated per event
+	 * These are instanciated per event
 	 */
 
 	// gate is special, always last in the audio chain before going out to monitoring synths.
 	// It is responsible for the time offset of the event and freeing the event's group.
-	// !!! Synthdefs played through this system should only use Out.ar (no OffsetOut!)
+	// Synthdefs played through this system should only use Out.ar (no OffsetOut!)
 
-	SynthDef("bss_gate" ++ numChannels, { |in, out, sustain|
-		var sig = In.ar(in, numChannels);
-		var env = Env([0,1,1,0], [0, sustain, 0]).ar(Done.freeGroup);
+	// auto closing gate after <sustain> seconds
+	SynthDef("bss_gate_sustain" ++ numChannels, { |in, out, sustain, fadeIn(0), fadeOut(0.04)|
+		var sig, env;
+		sig = In.ar(in, numChannels);
+		env = Env([0,1,1,0], [fadeIn, sustain, fadeOut]).ar(Done.freeGroup);
+		sig = sig * env;
+		OffsetOut.ar(out, sig);
+		ReplaceOut.ar(in, Silent.ar(numChannels)); // because their could be multiple parallel synths playing on the same bus
+	}, [\ir, \ir]).add;
+
+	// instanciated when sustain = inf, released by setting `gate` to 0 or calling `release(fadeTime)` on the event
+	SynthDef("bss_gate" ++ numChannels, { |in, out, gate(1), fadeIn(0), fadeOut(0.04)|
+		var sig, env;
+		sig = In.ar(in, numChannels);
+		env = EnvGen.ar(
+			Env.new(
+				levels: [0,1,0],
+				times: [fadeIn, fadeOut],
+				curve: \sin,
+				releaseNode: 1
+			),
+			gate: gate,
+			doneAction: Done.freeGroup
+		);
 		sig = sig * env;
 		OffsetOut.ar(out, sig);
 		ReplaceOut.ar(in, Silent.ar(numChannels));
@@ -32,19 +53,14 @@
 	// `numChannels` is the number of output channels of this bss instance (2 by default)
 
 	(1..Bss.maxSoundFileNumChannels).do { |soundFileNumChannels|
-
 		SynthDef("bss_sampler_bufrd" ++ soundFileNumChannels, {
 			var snd, phase, bufnum, rate, freq, numFrames, phaseRate;
-			var trig = Trig.kr(1);
 
 			bufnum = \bufnum.ir(0);
 			freq   = \freq.kr(440);
-
 			rate = freq / 60.midicps;
-
 			numFrames = max(BufFrames.ir(bufnum), 1);
 			phaseRate = rate * BufSampleRate.ir(bufnum);
-
 
 			phase = Sweep.ar(1, phaseRate) 
 				  * rate
@@ -56,15 +72,16 @@
 				phase,
 				\loop.kr(0), 
 				4
-			) * \amp.kr(1);
+			) 
+			* \amp.kr(1);
 
 			snd = BssPan.ar(snd, numChannels, \pan.kr(0));
 			Out.ar(\out.kr(0), snd);
 		}).add;
 	};
 
-	~bss.addSamplerModule('bufrd', { |event|
-		event.sendSynth("bss_sampler_bufrd" ++ ~bufNumChannels, [
+	~bss.addSamplerModule('bufrd', { |bssEvent|
+		bssEvent.sendSynth("bss_sampler_bufrd" ++ ~bufNumChannels, [
 			bufnum: ~bufnum,
 			begin: ~begin,
 			freq: ~freq,
@@ -74,46 +91,5 @@
 			amp: ~amp,
 			out: ~out,
 		]);
-	});
-
-	/*
-	 * FX MODULES -
-	 */
-
-	SynthDef("bss_grain_env" ++ numChannels, { |out, sustain, tilt(0.5), hold(0), curveRise(0), curveFall(0)|
-		var sig;
-		sig = In.ar(out, numChannels);
-		sig = sig * BssGrainEnv.ar(tilt, hold, curveRise, curveFall, sustain);
-		ReplaceOut.ar(out, sig);
-	}, [\ir]).add;
-
-	~bss.addEffectModule('grain_env', #{ |event|
-		event.sendSynth("bss_grain_env" ++ ~numChannels, [
-			tilt: ~tilt,
-			hold: ~hold,
-			curveRise: ~curveRise,
-			curveFall: ~curveFall,
-			sustain: ~sustain,
-			out: ~out,
-		])
-	});
-
-	SynthDef("bss_gverb" ++ numChannels, { |out, sustain, roomsize(10), revtime(3)|
-		var sig;
-		var trig = Impulse.kr(0);
-
-		sig = In.ar(out, numChannels);
-		sig = GVerb.ar(sig, roomsize, revtime);
-		sig = sig * Env([1,1,0], [sustain - 0.05, 0.05], \sin).ar;
-		ReplaceOut.ar(out, sig);
-	}, [\ir]).add;
-
-	~bss.addEffectModule('gverb', #{ |event|
-		event.sendSynth("bss_gverb" ++ ~numChannels, [
-			roomsize: ~roomsize ? 10,
-			revtime: ~revtime ? 3,
-			sustain: ~sustain,
-			out: ~out,
-		])
 	});
 )

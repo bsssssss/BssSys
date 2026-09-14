@@ -5,6 +5,7 @@ Bss {
 	var <tracks, <outBusses, <group;
 	var <modules, <effectModules, <samplerModules;
 	var <soundLibrary, <tuning;
+	var <clock;
 	var <reaperProjectPath, <reaper;
 
 	*new {|numChannels, server, logLevel|
@@ -25,6 +26,7 @@ Bss {
 		group = server.nextPermNodeID;
 		soundLibrary = BssSoundLibrary(server, numChannels, this.logger);
 		tuning = BssTuning();
+		clock = TempoClock.new(60/60).permanent_(true);
 
 		this.loadSynthDefs("../lib".resolveRelative);
 		ServerTree.add(this, server);
@@ -45,7 +47,7 @@ Bss {
 		};
 	}
 
-	mkTracks {
+	createTracks {
 		outBusses.do { |outBus, id|
 			var track = BssTrack(this, outBus, id);
 			tracks = tracks.add(track);
@@ -56,6 +58,7 @@ Bss {
 		server.sendMsg("/g_new", group, 0, 1);
 		tracks.do(_.initNodeTree);
 	}
+
 
 	/*
 	 * File Loading
@@ -81,6 +84,10 @@ Bss {
 		soundLibrary.loadSoundFile(path, name, append);
 	}
 
+	loadSoundFolder { |path, name, append(false)|
+		soundLibrary.loadSoundFolder(path, name, append);
+	}
+
 	// modules get added here as well
 	loadSynthDefs { |path|
 		var paths = pathMatch(standardizePath(path +/+ "*")).select(_.endsWith(".scd"));
@@ -91,12 +98,15 @@ Bss {
 		};
 
 		modules.keysValuesDo { |k, v|
-			format("%: % modules", k, v.size).postln;
+			format("% (% modules)", k, v.size).postln;
+			"\t".post;
 			v.do { |module|
-				("\t" ++ module.name).postln;
+				module.name.post; ",".post
 			};
+			"".postln;
 		};
 	}
+
 
 	/*
 	 * Modules
@@ -118,47 +128,27 @@ Bss {
 		modules['samplers'] = samplerModules;
 	}
 
+
 	/*
 	 * Events
 	 */
 
-	play { |...args, kwargs|
-		var track, event = ();
-
-		if (args.size > 0 and: {args[0].isKindOf(Event)}) {
-			event = args[0];
-		};
-
-		// allow `bss.play(freq: 666, amp: 0.2)`
-		kwargs.pairsDo { |k,v|
-			event[k] = v;
-		};
-
-		track = tracks @@ (event[\track] ? 0);
-
-		BssEvent(track, modules, event).play
+	snd { |name ...args, kwargs|
+		var event = (sound: name.asSymbol);
+		kwargs.pairsDo { |k, v| event[k] = v };
+		^BssEvent(this, event).method_(\auto);
 	}
 
-	playSynth { |name, args = #[], fxChain = #[]|
-		var events, track;
-		args.flop.do { |a|
-			var event;
-			a = a ++ [s: name.asSymbol] ++ [chain: fxChain];
-			event = a.asEvent;
-			track = tracks.wrapAt(event[\track] ? 0);
-			BssEvent(track, modules, event).playSynth
-		};
+	syn { |name ...args, kwargs|
+		var event = (sound: name.asSymbol);
+		kwargs.pairsDo { |k, v| event[k] = v };
+		^BssEvent(this, event).method_(\synth);
 	}
 
-	playBuf { |name, args = #[], fxChain = #[]|
-		var events, track;
-		args.flop.do { |a|
-			var event;
-			a = a ++ [s: name.asSymbol] ++ [chain: fxChain];
-			event = a.asEvent;
-			track = tracks.wrapAt(event[\track] ? 0);
-			BssEvent(track, modules, event).playBuf
-		};
+	buf { |name ...args, kwargs|
+		var event = (sound: name.asSymbol);
+		kwargs.pairsDo { |k, v| event[k] = v };
+		^BssEvent(this, event).method_(\buffer);
 	}
 
 	/*
@@ -231,21 +221,17 @@ Bss {
 	 */
 
 	start { |busArray([0]), withReaper = false|
-		if (busArray.isNil) {
-			outBusses = [0];
-		} {
-			outBusses = busArray.asArray;
-		};
-
+		outBusses = busArray.asArray;
 		this.initNodeTree;
-		this.mkTracks;
-
+		this.createTracks;
 		if (withReaper) { this.mkReaperProject };
-
-		^this;
 	}
 
 	doOnServerTree {
 		this.initNodeTree;
+	}
+
+	seq {
+		^BssSeq(this.clock);
 	}
 }

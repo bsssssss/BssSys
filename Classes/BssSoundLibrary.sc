@@ -14,6 +14,10 @@ BssSoundLibrary {
 		banks = IdentityDictionary();
 	}
 
+	/*
+	 * SOUND FILES
+	 */
+
 	loadSoundFilesToBank { |paths, bankName, namingFunc, append(false)|
 		var form = "%_%";
 		if (bankName.isNil) { logger.error("need a bank name") };
@@ -39,7 +43,7 @@ BssSoundLibrary {
 
 		logger.info("will load % folder%: %", folderPaths.size, if(folderPaths.size > 1, "s", ""), folderPaths);
 		folderPaths.do { |folderPath|
-			this.loadSoundFileFolder(folderPath, namingFunc.(folderPath), append);
+			this.loadSoundFolder(folderPath, namingFunc.(folderPath), append);
 		};
 	}
 
@@ -58,7 +62,7 @@ BssSoundLibrary {
 		};
 	}
 
-	loadSoundFileFolder { |folderPath, name, append(false)|
+	loadSoundFolder { |folderPath, name, append(false)|
 		var filePaths;
 
 		if (name.isNil) { logger.error("need a name"); ^nil };
@@ -101,24 +105,35 @@ BssSoundLibrary {
 		^BssBuffer.readWithInfo(server, path, onlyHeader: doNotReadYet);
 	}
 
+
+	/*
+	 * Set
+	 */
+
 	addBuffer { |buffer, name, append(false)|
 		var event;
-		if (name.isNil)   { logger.error("need a name"); ^nil };
+
 		if (buffer.isNil) { logger.error("buffer is nil"); ^nil };
+		if (name.isNil) { logger.error("need a name"); ^nil };
 
 		name = name.asSymbol;
+
 		if (buffers[name].notNil and: { append.not }) {
 			logger.info("% is already registered, replacing...", name);
 			this.freeSoundFiles(name);
 		};
-		if (buffers[name].isNil) { logger.debug("adding buffers entry: %", name) };
+
+		if (buffers[name].isNil) { 
+			logger.debug("adding buffers entry: %", name) 
+		};
+
 		buffers[name] = buffers[name].add(buffer);
 		event = this.makeBufferEvent(buffer);
 		bufferEvents[name] = bufferEvents[name].add(event);
 	}
 
 	addBank { |name|
-		if (name.isNil) { logger.error("bank name is nil") };
+		if (name.isNil) { logger.error("need a bank name") };
 		name = name.asSymbol;
 		banks[name] = banks[name].add(name);
 	}
@@ -135,31 +150,42 @@ BssSoundLibrary {
 		^event;
 	}
 
-	getBufferEvent { |name, index|
-		var events = this.at(name);
-		if (events.notNil) {
-			^events.wrapAt(index.asInteger) 
-		} { ^nil };
-	}
 
-	// getEvent { |name, index|
-	// 	var event;
-	// 	var bufferEvents = this.at(name);
-	// 	if (bufferEvents.isNil) { // could it be a synth ??
-	// 		if (SynthDescLib.at(name.asSymbol).notNil) {
-	// 			^event = (instrument: name.asSymbol);
-	// 		} {
-	// 			logger.error("(%): no synth or sample named % in SynthDescLib", thisMethod, name);
-	// 			^nil;
-	// 		};
-	// 	} { // it's a buffer event
-	// 		^bufferEvents.wrapAt(index.asInteger);
-	// 	};
-	// }
+	/*
+	 * Get
+	 */
 
 	at { |name| 
 		^bufferEvents[name];
 	}
+
+	getSynthEvent { |name|
+		var synthDesc;
+		name = name.asSymbol;
+		synthDesc = SynthDescLib.at(name);
+		if (synthDesc.isNil) { ^nil };
+		^(instrument: name) 
+	}
+
+	getBufferEvent { |name, index|
+		var events = this.at(name.asSymbol);
+		if (events.isNil) { ^nil };
+		^events.wrapAt(index.asInteger) 
+	}
+
+	getEvent { |name, index, method(\auto)| 
+		switch (method,
+			\auto,  { ^this.getBufferEvent(name, index) ? this.getSynthEvent(name) },
+			\synth, { ^this.getSynthEvent(name) },
+			\buffer, { ^this.getBufferEvent(name, index) },
+			{ "% is not a valid method, expecting 'auto'|'synth'|'buffer'".format(method).error };
+		)
+	}
+
+
+	/*
+	 * Show
+	 */
 
 	showSoundFiles {
 		if (buffers.size == 0) {
