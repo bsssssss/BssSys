@@ -58,7 +58,7 @@ BssEvent {
 	sendSourceSynth {
 		if (~buffer.notNil) { 
 			var sampler = ~sampler ? "bufrd";
-			bss.modules[\samplers][sampler.asSymbol].value(this);
+			bss.moduleLibrary.samplers[sampler.asSymbol].value(this);
 		} {
 			if (~instrument.notNil) {
 				this.sendSynth(~instrument);
@@ -72,7 +72,7 @@ BssEvent {
 			var fxEvent = spec[1].asEvent;
 			fxEvent.parent = event;
 			fxEvent.use {
-				bss.modules[\effects][name].value(this) 
+				bss.moduleLibrary.effects[name].value(this) 
 			};
 		};
 	}

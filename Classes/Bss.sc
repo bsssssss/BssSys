@@ -3,9 +3,9 @@ Bss {
 
 	var <server, <numChannels, logLevel;
 	var <tracks, <outBusses, <group;
-	var <modules, <effectModules, <samplerModules;
-	var <soundLibrary, <tuning;
-	var <clock;
+	var <moduleLibrary, <ml, <soundLibrary, <sl;
+	var <tuning, <clock;
+
 	var <reaperProjectPath, <reaper;
 
 	*new {|numChannels, server, logLevel|
@@ -19,12 +19,12 @@ Bss {
 	init {
 		this.initLogger;
 
-		modules = IdentityDictionary();
-		effectModules = IdentityDictionary();
-		samplerModules = IdentityDictionary();
+		moduleLibrary = BssModuleLibrary();
+		ml = moduleLibrary;
+		soundLibrary = BssSoundLibrary(server, numChannels);
+		sl = soundLibrary;
 
 		group = server.nextPermNodeID;
-		soundLibrary = BssSoundLibrary(server, numChannels, this.logger);
 		tuning = BssTuning();
 		clock = TempoClock.new(60/60).permanent_(true);
 
@@ -97,7 +97,7 @@ Bss {
 			(bss: this).use { p.load };
 		};
 
-		modules.keysValuesDo { |k, v|
+		moduleLibrary.modules.keysValuesDo { |k, v|
 			format("% (% modules)", k, v.size).postln;
 			"\t".post;
 			v.do { |module|
@@ -113,19 +113,11 @@ Bss {
 	 */
 
 	addEffectModule { |name, func, cond|
-		var module, index;
-		name = name.asSymbol;
-		module = BssModule(name, func, cond);
-		effectModules[name] = module;
-		modules['effects'] = effectModules;
+		moduleLibrary.add(\effect, name, func, cond);
 	}
 
 	addSamplerModule { |name, func, cond|
-		var module, index;
-		name = name.asSymbol;
-		module = BssModule(name, func, cond);
-		samplerModules[name] = module;
-		modules['samplers'] = samplerModules;
+		moduleLibrary.add(\sampler, name, func, cond);
 	}
 
 
