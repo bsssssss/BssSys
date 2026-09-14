@@ -179,7 +179,7 @@ BssSoundLibrary {
 	 * Get
 	 */
 
-	at { |name| 
+	at { |name|
 		^bufferEvents[name];
 	}
 

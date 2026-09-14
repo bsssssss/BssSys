@@ -158,19 +158,19 @@ Bss {
 	// sounds 
 
 	snd { |name ...args, kwargs|
-		var event = (sound: name.asSymbol);
+		var event = (sound: name);
 		kwargs.pairsDo { |k, v| event[k] = v };
 		^BssEvent(this, event).method_(\auto);
 	}
 
 	syn { |name ...args, kwargs|
-		var event = (sound: name.asSymbol);
+		var event = (sound: name);
 		kwargs.pairsDo { |k, v| event[k] = v };
 		^BssEvent(this, event).method_(\synth);
 	}
 
 	buf { |name ...args, kwargs|
-		var event = (sound: name.asSymbol);
+		var event = (sound: name);
 		kwargs.pairsDo { |k, v| event[k] = v };
 		^BssEvent(this, event).method_(\buffer);
 	}
