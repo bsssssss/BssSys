@@ -1,27 +1,30 @@
 Bss {
 	classvar <>maxSoundFileNumChannels = 2; // expected maximum number of channels for sound files
 
-	var <server, <numChannels, logLevel;
+	var <server, <numChannels;
+
+	var <tracks, <outBusses, <group;
+	var <moduleLibrary, <ml, <soundLibrary, <sl;
+	var <tuning, <clock;
+
 	var <tracks, <outBusses, <group;
 	var <modules, <effectModules, <samplerModules;
 	var <soundLibrary, <tuning;
 	var <clock;
 	var <reaperProjectPath, <reaper;
 
-	*new {|numChannels, server, logLevel|
+	*new {|numChannels, server|
 		^super.newCopyArgs(
 			numChannels: numChannels ? 2,
 			server: server ? Server.default,
-			logLevel: logLevel ? \info,
 		).init;
 	}
 
 	init {
-		this.initLogger;
-
-		modules = IdentityDictionary();
-		effectModules = IdentityDictionary();
-		samplerModules = IdentityDictionary();
+		moduleLibrary = BssModuleLibrary();
+		ml = moduleLibrary;
+		soundLibrary = BssSoundLibrary(server, numChannels);
+		sl = soundLibrary;
 
 		group = server.nextPermNodeID;
 		soundLibrary = BssSoundLibrary(server, numChannels, this.logger);
@@ -32,19 +35,6 @@ Bss {
 		ServerTree.add(this, server);
 
 		"*** Bss Sonic System initialized ***".postln;
-	}
-
-	initLogger {
-		this.logger.level = logLevel;
-		this.logger.logFile = "/tmp/sclang_bss.log";
-		this.logger.shouldPost = true;
-		this.logger.logToFile(true);
-		this.logger.formatter = { |item, log| 
-            format("%% ", 
-				log.name.asString.toUpper,
-				(":" ++ item[\level].asString ++ ":").toUpper
-			) ++ item[\string];
-		};
 	}
 
 	createTracks {
@@ -59,41 +49,17 @@ Bss {
 		tracks.do(_.initNodeTree);
 	}
 
-
-	/*
-	 * File Loading
-	 */
-
-	doNotReadYet {
-		^soundLibrary.doNotReadYet;
-	}
-
-	doNotReadYet_ { |bool|
-		^soundLibrary.doNotReadYet = bool;
-	}
-
-	loadSoundFilesToBank { |paths, bankName| 
-		soundLibrary.loadSoundFilesToBank(paths, bankName);
-	}
-
-	loadSoundFiles { |paths| 
-		soundLibrary.loadSoundFiles(paths);
-	}
-
-	loadSoundFile { |path, name, append(false)|
-		soundLibrary.loadSoundFile(path, name, append);
-	}
-
-	loadSoundFolder { |path, name, append(false)|
-		soundLibrary.loadSoundFolder(path, name, append);
-	}
-
 	// modules get added here as well
 	loadSynthDefs { |path|
 		var paths = pathMatch(standardizePath(path +/+ "*")).select(_.endsWith(".scd"));
-		if (paths.isNil) { this.logger.warning("no .scd files in %", path) };
+
+		if (paths.isNil) {
+			format("cannot load synthdefs. No .scd files in '%'", path);
+			^this;
+		};
+
 		paths.do { |p|
-			this.logger.info("loading %", p.basename);
+			format("loading synthdefs in '%'", p.basename).postln;
 			(bss: this).use { p.load };
 		};
 
@@ -130,44 +96,6 @@ Bss {
 
 
 	/*
-	 * Events
-	 */
-
-	snd { |name ...args, kwargs|
-		var event = (sound: name.asSymbol);
-		kwargs.pairsDo { |k, v| event[k] = v };
-		^BssEvent(this, event).method_(\auto);
-	}
-
-	syn { |name ...args, kwargs|
-		var event = (sound: name.asSymbol);
-		kwargs.pairsDo { |k, v| event[k] = v };
-		^BssEvent(this, event).method_(\synth);
-	}
-
-	buf { |name ...args, kwargs|
-		var event = (sound: name.asSymbol);
-		kwargs.pairsDo { |k, v| event[k] = v };
-		^BssEvent(this, event).method_(\buffer);
-	}
-
-	/*
-	 * Logging
-	 */
-
-	logger {
-		^BssLog(\Bss);
-	}
-
-	logLevel {
-		^this.logger.level;
-	}
-
-	logLevel_ { |level|
-		this.logger.level = level;
-	}
-
-	/*
 	 * Reaper
 	 */
 
@@ -196,7 +124,8 @@ Bss {
 		tracks = numTracks.collect{ |i|
 			var props = ();
 			props.put(\NAME, "track_%".format(i+1));
-			props.put(\REC, "1 % 1 0 0 0 0".format((i * 2) + 1024)); // stereo rec inputs starts from 1024
+			// stereo rec inputs starts from 1024
+			props.put(\REC, "1 % 1 0 0 0 0".format((i * 2) + 1024));
 			ReaTrack.new(props)
 		};
 
@@ -206,7 +135,7 @@ Bss {
 
 		project.write(projectPath);
 		reaperProjectPath = projectPath;
-		this.logger.info("Created reaper project at %", projectPath);
+		format("Created reaper project in '%'", projectPath).postln;
 
 		projectPath.openOS;
 		reaper = ReaperControl.start;
@@ -216,8 +145,8 @@ Bss {
 	 * Startup
 	 */
 
-	start { |outBusses([0]), withReaper(false)|
-		outBusses = outBusses.asArray;
+	start { |busses([0]), withReaper(false)|
+		outBusses = busses.asArray;
 		this.initNodeTree;
 		this.createTracks;
 		if (withReaper) { this.mkReaperProject };
@@ -228,19 +157,42 @@ Bss {
 	}
 
 	/*
-	 * Sequences
-	 */
-
-	seq {
-		^BssSeq(this.clock);
-	}
-
-	/*
 	 * Utils
 	 */
 
 	show {
 		soundLibrary.show;
 	}
+
+	/*
+	 * Playing
+	 */
+
+	// sounds 
+
+	snd { |name ...args, kwargs|
+		var event = (sound: name.asSymbol);
+		kwargs.pairsDo { |k, v| event[k] = v };
+		^BssEvent(this, event).method_(\auto);
+	}
+
+	syn { |name ...args, kwargs|
+		var event = (sound: name.asSymbol);
+		kwargs.pairsDo { |k, v| event[k] = v };
+		^BssEvent(this, event).method_(\synth);
+	}
+
+	buf { |name ...args, kwargs|
+		var event = (sound: name.asSymbol);
+		kwargs.pairsDo { |k, v| event[k] = v };
+		^BssEvent(this, event).method_(\buffer);
+	}
+
+	// sequences 
+
+	seq {
+		^BssSeq(this.clock);
+	}
+
 
 }

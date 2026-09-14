@@ -4,7 +4,7 @@ BssEvent {
 	var <>method;
 
 	*new { |bss, event|
-		^super.newCopyArgs(bss:bss, event:event).init;
+		^super.newCopyArgs(bss: bss, event: event).init;
 	}
 
 	init {
@@ -39,7 +39,7 @@ BssEvent {
 		if (msgFunc.notNil) {
 			^msgFunc;
 		} {
-			bss.logger.error( "(%): no msgFunc for instrument %", thisMethod, intrument);
+			format( "could not get msgFunc for '%'", intrument).error;
 		};
 	}
 
