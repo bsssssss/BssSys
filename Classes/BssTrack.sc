@@ -11,7 +11,7 @@ BssTrack {
 
 	init {
 		server = bss.server;
-		name   = "track %".format(id);
+		name   = "track %".format(id + 1);
 		group  = server.nextPermNodeID;
 
 		synthBus = Bus.audio(server, bss.numChannels);
