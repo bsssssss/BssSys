@@ -13,16 +13,6 @@ BssEvent {
 		effectChain = [];
 	}
 
-	addFx { |name, args|
-		if (name.notNil) {
-			effectChain = effectChain.add([name.asSymbol, args ? #[]]);
-		};
-	}
-
-	effectChain_ { |specArray|
-		effectChain = specArray.select(_.notNil);
-	}
-
 	play {
 		event.parent = track.defaultParentEvent;
 		event.use {
@@ -57,6 +47,16 @@ BssEvent {
 		};
 	}
 
+	addFx { |name, args|
+		if (name.notNil) {
+			effectChain = effectChain.add([name.asSymbol, args ? #[]]);
+		};
+	}
+
+	effectChain_ { |specArray|
+		effectChain = specArray.select(_.notNil);
+	}
+
 	resolveSoundName {
 		var sound = ~s ? ~sound;
 		if (~bank.notNil) {
@@ -69,6 +69,9 @@ BssEvent {
 		var soundEvent = bss.soundLibrary.getEvent(~sound, ~n, searchMethod);
 		if (soundEvent.notNil) {
 			currentEnvironment.proto = soundEvent;
+		}
+	}
+
 	calculateTimeSpan {
 		var sustain;
 		if (~buffer.notNil) {
