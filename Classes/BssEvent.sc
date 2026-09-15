@@ -69,12 +69,15 @@ BssEvent {
 
 	sendEffectChain {
 		effectChain.do { |spec|
-			var name = spec[0].asSymbol;
-			var fxEvent = spec[1].asEvent;
-			fxEvent.parent = event;
-			fxEvent.use {
-				bss.moduleLibrary.effects[name].value(this) 
-			};
+			var name, fxEvent;
+			if (spec.notNil) {
+				name = spec[0].asSymbol;
+				fxEvent = spec[1].asEvent;
+				fxEvent.parent = event;
+				fxEvent.use {
+					bss.moduleLibrary.effects[name].value(this) 
+				};
+			}
 		};
 	}
 
