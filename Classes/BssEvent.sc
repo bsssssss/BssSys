@@ -1,6 +1,6 @@
 BssEvent {
 	var <bss, <event;
-	var <track, <>effectChain, <synths, <gateSynth;
+	var <track, <effectChain, <synths, <gateSynth;
 	var <>searchMethod;
 
 	*new { |bss, event|
@@ -13,8 +13,47 @@ BssEvent {
 		effectChain = [];
 	}
 
-	fx { |name, args| 
-		effectChain = effectChain.add([name.asSymbol, args ? #[]]);
+	addFx { |name, args|
+		if (name.notNil) {
+			effectChain = effectChain.add([name.asSymbol, args ? #[]]);
+		};
+	}
+
+	effectChain_ { |specArray|
+		effectChain = specArray.select(_.notNil);
+	}
+
+	play {
+		event.parent = track.defaultParentEvent;
+		event.use {
+			this.resolveSoundName;
+			this.resolveProtoEvent;
+			this.playSynths;
+		};
+	}
+
+	set { |...args|
+		args.pairsDo { |k, v| event.put(k, v) };
+		event.use {
+			synths.do { |synth|
+				var name = synth.defName;
+				var msgFunc = this.getMsgFunc(name);
+				var args = msgFunc.valueEnvir.asControlInput;
+				bss.server.bind {
+					synth.set(*args) 
+				};
+			};
+		};
+	}
+
+	release { |fadeTime|
+		var args = [\gate, 0];
+		if (fadeTime.notNil) {
+			args = args ++ [\fadeOut, fadeTime] 
+		};
+		bss.server.bind {
+			gateSynth.set(*args);
+		};
 	}
 
 	resolveSoundName {
@@ -70,14 +109,12 @@ BssEvent {
 	sendEffectChain {
 		effectChain.do { |spec|
 			var name, fxEvent;
-			if (spec.notNil) {
-				name = spec[0].asSymbol;
-				fxEvent = spec[1].asEvent;
-				fxEvent.parent = event;
-				fxEvent.use {
-					bss.moduleLibrary.effects[name].value(this) 
-				};
-			}
+			name = spec[0].asSymbol;
+			fxEvent = spec[1].asEvent;
+			fxEvent.parent = event;
+			fxEvent.use {
+				bss.moduleLibrary.effects[name].value(this) 
+			};
 		};
 	}
 
@@ -100,39 +137,6 @@ BssEvent {
 			this.sendEffectChain;
 			this.sendGateSynth; // LAST
 		}
-	}
-
-	play {
-		event.parent = track.defaultParentEvent;
-		event.use {
-			this.resolveSoundName;
-			this.resolveProtoEvent;
-			this.playSynths;
-		};
-	}
-
-	set { |...args|
-		args.pairsDo { |k,v| event.put(k,v) };
-		event.use {
-			synths.do { |synth|
-				var name = synth.defName;
-				var msgFunc = this.getMsgFunc(name);
-				var args = msgFunc.valueEnvir.asControlInput;
-				bss.server.bind {
-					synth.set(*args) 
-				};
-			};
-		};
-	}
-
-	release { |fadeTime|
-		var args = [\gate, 0];
-		if (fadeTime.notNil) {
-			args = args ++ [\fadeOut, fadeTime] 
-		};
-		bss.server.bind {
-			gateSynth.set(*args);
-		};
 	}
 
 	show { |event|
