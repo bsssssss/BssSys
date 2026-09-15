@@ -19,34 +19,52 @@
 	// It is responsible for the time offset of the event and freeing the event's group.
 	// Synthdefs played through this system should only use Out.ar (no OffsetOut!)
 
-	// auto closing gate after <sustain> seconds
-	SynthDef("bss_gate_sustain" ++ numChannels, { |in, out, sustain, fadeIn(0), fadeOut(0.04)|
-		var sig, env;
+	// auto closing gate after <sustain> seconds, or after <fadeOut> seconds when gate is set to 0
+	SynthDef("bss_gate" ++ numChannels, { |in, out, sustain, gate(1), fadeIn(0), fadeOut(0.04)|
+		var sig, env, gateEnv;
 		sig = In.ar(in, numChannels);
-		env = Env([0,1,1,0], [fadeIn, sustain, fadeOut]).ar(Done.freeGroup);
-		sig = sig * env;
-		OffsetOut.ar(out, sig);
-		ReplaceOut.ar(in, Silent.ar(numChannels)); // because their could be multiple parallel synths playing on the same bus
-	}, [\ir, \ir]).add;
 
-	// instanciated when sustain = inf, released by setting `gate` to 0 or calling `release(fadeTime)` on the event
-	SynthDef("bss_gate" ++ numChannels, { |in, out, gate(1), fadeIn(0), fadeOut(0.04)|
-		var sig, env;
-		sig = In.ar(in, numChannels);
-		env = EnvGen.ar(
+		env = Env(
+			[0,1,1,0],
+			[fadeIn, sustain, fadeOut]
+		).ar(Done.freeGroup);
+
+		gateEnv = EnvGen.ar(
 			Env.new(
-				levels: [0,1,0],
-				times: [fadeIn, fadeOut],
+				levels: [0, 1, 0],
+				times: [0, fadeOut],
 				curve: \sin,
 				releaseNode: 1
 			),
 			gate: gate,
 			doneAction: Done.freeGroup
 		);
-		sig = sig * env;
+
+		sig = sig * env * gateEnv;
+
 		OffsetOut.ar(out, sig);
+		// clear the input bus for other synths
 		ReplaceOut.ar(in, Silent.ar(numChannels));
 	}, [\ir, \ir]).add;
+
+	// instanciated when sustain = inf, released by setting `gate` to 0 or calling `release(fadeTime)` on the event
+	// SynthDef("bss_gate" ++ numChannels, { |in, out, gate(1), fadeIn(0), fadeOut(0.04)|
+	// 	var sig, env;
+	// 	sig = In.ar(in, numChannels);
+	// 	env = EnvGen.ar(
+	// 		Env.new(
+	// 			levels: [0,1,0],
+	// 			times: [fadeIn, fadeOut],
+	// 			curve: \sin,
+	// 			releaseNode: 1
+	// 		),
+	// 		gate: gate,
+	// 		doneAction: Done.freeGroup
+	// 	);
+	// 	sig = sig * env;
+	// 	OffsetOut.ar(out, sig);
+	// 	ReplaceOut.ar(in, Silent.ar(numChannels));
+	// }, [\ir, \ir]).add;
 
 	// Because we cannot declare the number of channels of a soundfile at synth instanciation time, we need to define a sampler synth for each case.
 	// By default `maxSoundFileNumChannels` is 2, so this will define 2 synths: "bss_sampler_1ch" and "bss_sampler_2ch".
@@ -81,13 +99,12 @@
 	};
 
 	~bss.addSamplerModule('bufrd', { |bssEvent|
-		var sustain = if (~sustain == inf or: { ~sustain.isNil }) { ~buffer.duration } { ~sustain };
 		bssEvent.sendSynth("bss_sampler_bufrd" ++ ~bufNumChannels, [
 			bufnum: ~bufnum,
 			begin: ~begin,
 			freq: ~freq,
 			rate: ~rate,
-			sustain: sustain,
+			sustain: ~sustain,
 			pan: ~pan,
 			amp: ~amp,
 			out: ~out,

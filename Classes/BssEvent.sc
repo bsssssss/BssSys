@@ -28,6 +28,7 @@ BssEvent {
 		event.use {
 			this.resolveSoundName;
 			this.resolveProtoEvent;
+			this.calculateTimeSpan;
 			this.playSynths;
 		};
 	}
@@ -70,7 +71,14 @@ BssEvent {
 			"no sound % in library (% search)".format(~sound, searchMethod).error;
 		} {
 			currentEnvironment.proto = soundEvent;
+	calculateTimeSpan {
+		var sustain;
+		if (~buffer.notNil) {
+			sustain = ~sustain ? ~buffer.duration;
+		} {
+			sustain = ~sustain ? 1;
 		};
+		~sustain = sustain;
 	}
 
 	getMsgFunc { |intrument|
@@ -97,7 +105,6 @@ BssEvent {
 	sendSourceSynth {
 		if (~buffer.notNil) { 
 			var sampler = ~sampler ? \bufrd;
-			if (~sustain.isNil) { ~sustain = ~buffer.duration };
 			bss.moduleLibrary.samplers[sampler.asSymbol].value(this);
 		} {
 			if (~instrument.notNil) {
@@ -119,11 +126,11 @@ BssEvent {
 	}
 
 	sendGateSynth {
-		var name = if (~sustain == inf, "bss_gate", "bss_gate_sustain");
+		var name = "bss_gate";
 		var synth = Synth.tail(~synthGroup, name ++ ~numChannels, [
 			in: track.synthBus,
 			out: track.trackBus,
-			sustain: ~sustain ? 1,
+			sustain: ~sustain,
 			fadeIn: ~fadeIn ? 0,
 			fadeOut: ~fadeOut ? 0.04
 		]);
