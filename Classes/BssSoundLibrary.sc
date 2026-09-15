@@ -185,25 +185,38 @@ BssSoundLibrary {
 
 	getSynthEvent { |name|
 		var synthDesc;
-		name = name.asSymbol;
-		synthDesc = SynthDescLib.at(name);
-		if (synthDesc.isNil) { ^this };
-		^(instrument: name) 
+		synthDesc = SynthDescLib.at(name.asSymbol);
+		if (synthDesc.notNil) {
+			^(instrument: synthDesc.name);
+		};
+		^nil;
 	}
 
 	getBufferEvent { |name, index|
 		var events = this.at(name.asSymbol);
-		if (events.isNil) { ^this };
-		^events.wrapAt(index.asInteger) 
+		if (events.notNil) {
+			^events.wrapAt(index.asInteger) 
+		};
+		^nil;
 	}
 
-	getEvent { |name, index, method(\auto)| 
-		switch (method,
-			\auto,  { ^this.getBufferEvent(name, index) ? this.getSynthEvent(name) },
-			\synth, { ^this.getSynthEvent(name) },
-			\buffer, { ^this.getBufferEvent(name, index) },
-			{ "no method '%' for getEvent. Expecting 'auto'|'synth'|'buffer'".format(method).error };
-		)
+	getEvent { |name, index, searchMethod(\auto)| 
+		var event;
+		switch (searchMethod,
+			\auto, {
+				^event = this.getBufferEvent(name, index) ? this.getSynthEvent(name) 
+			},
+			\synth, {
+				^event = this.getSynthEvent(name) 
+			},
+			\buffer, {
+				^event = this.getBufferEvent(name, index) 
+			},
+			{
+				"unrecognized searchMethod '%' for getEvent. Expecting 'auto'|'synth'|'buffer'".format(searchMethod).error;
+			};
+		);
+		^nil;
 	}
 
 
@@ -223,8 +236,8 @@ BssSoundLibrary {
 	}
 
 	show {
-		"*** Sound Library **********************".postln;
+		"--- Sound Library ----------------------".postln;
 		this.showSoundFiles;
-		"****************************************".postln;
+		"----------------------------------------".postln;
 	}
 }

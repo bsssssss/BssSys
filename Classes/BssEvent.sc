@@ -1,7 +1,7 @@
 BssEvent {
 	var <bss, <event;
 	var <track, <>effectChain, <synths, <gateSynth;
-	var <>method;
+	var <>searchMethod;
 
 	*new { |bss, event|
 		^super.newCopyArgs(bss: bss, event: event).init;
@@ -26,9 +26,9 @@ BssEvent {
 	}
 
 	resolveProtoEvent {
-		var event = bss.soundLibrary.getEvent(~sound, ~n, method);
+		var event = bss.soundLibrary.getEvent(~sound, ~n, searchMethod);
 		if (event.isNil) {
-			"no sound % in library".format(~sound).error;
+			"no sound % in library (% search)".format(~sound, searchMethod).error;
 		} {
 			currentEnvironment.proto = event;
 		};

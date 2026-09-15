@@ -160,19 +160,19 @@ Bss {
 	snd { |name ...args, kwargs|
 		var event = (sound: name);
 		kwargs.pairsDo { |k, v| event[k] = v };
-		^BssEvent(this, event).method_(\auto);
+		^BssEvent(this, event).searchMethod_(\auto);
 	}
 
 	syn { |name ...args, kwargs|
 		var event = (sound: name);
 		kwargs.pairsDo { |k, v| event[k] = v };
-		^BssEvent(this, event).method_(\synth);
+		^BssEvent(this, event).searchMethod_(\synth);
 	}
 
 	buf { |name ...args, kwargs|
 		var event = (sound: name);
 		kwargs.pairsDo { |k, v| event[k] = v };
-		^BssEvent(this, event).method_(\buffer);
+		^BssEvent(this, event).searchMethod_(\buffer);
 	}
 
 	// sequences 
