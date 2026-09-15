@@ -97,13 +97,12 @@ BssSoundLibrary {
 			^this;
 		};
 
-		"---------------------".postln;
 		format("loading '%' to '%'", folderPath, name).postln;
 		filePaths.do { |path|
 			this.loadSoundFile(path, name, method);
 			method = \append;
 		};
-		"---------------------\n".postln;
+		"".postln;
 	}
 
 	loadSoundFile { |path, name, method(\replace)|
@@ -224,20 +223,16 @@ BssSoundLibrary {
 	 * Show
 	 */
 
-	showSoundFiles {
+	show {
+		"Sound Library:".postln;
 		if (buffers.size == 0) {
 			"sound file pool is empty...".postln 
 		} {
-			format("% folder%:", buffers.size, if(buffers.size > 1, "s", "")).postln;
+			format("% entr%", buffers.size, if(buffers.size > 1, "ies", "y")).postln;
 			buffers.keysValuesDo { |k,v|
 				format("\t% (% file%)", k.asString.padRight(30,"."), v.size, if(v.size > 1, "s", "")).postln;
 			}
 		};
-	}
-
-	show {
-		"--- Sound Library ----------------------".postln;
-		this.showSoundFiles;
-		"----------------------------------------".postln;
+		"".postln;
 	}
 }

@@ -29,7 +29,9 @@ Bss {
 		this.loadSynthDefs("../lib".resolveRelative);
 		ServerTree.add(this, server);
 
-		"*** Bss Sonic System initialized ***".postln;
+		"*** Bss Sonic System initialized ! ***".postln;
+		"".postln;
+		moduleLibrary.show;
 	}
 
 	createTracks {
@@ -54,18 +56,10 @@ Bss {
 		};
 
 		paths.do { |p|
-			format("loading synthdefs in '%'", p.basename).postln;
+			format("loading '%'", p.basename).postln;
 			(bss: this).use { p.load };
 		};
-
-		moduleLibrary.modules.keysValuesDo { |k, v|
-			format("% (% modules)", k, v.size).postln;
-			"\t".post;
-			v.do { |module|
-				module.name.post; ",".post
-			};
-			"".postln;
-		};
+		"".postln;
 	}
 
 
@@ -148,6 +142,7 @@ Bss {
 	 */
 
 	show {
+		moduleLibrary.show;
 		soundLibrary.show;
 	}
 

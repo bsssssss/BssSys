@@ -24,4 +24,15 @@ BssModuleLibrary {
 		module = BssModule(name, func, cond);
 		modules[type].put(name, module);
 	}
+
+	show {
+		"Module Library:".postln;
+		modules.keysValuesDo { |k, v|
+			format("% (% module%)", k, v.size, if(v.size > 1, "s", "")).postln;
+			v.do { |module, i|
+				("\t* " ++ module.name).postln; 
+			};
+		};
+		"".postln;
+	}
 }
