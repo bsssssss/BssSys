@@ -203,19 +203,20 @@ BssSoundLibrary {
 		var event;
 		switch (searchMethod,
 			\auto, {
-				^event = this.getBufferEvent(name, index) ? this.getSynthEvent(name) 
+				event = this.getBufferEvent(name, index) ? this.getSynthEvent(name) 
 			},
 			\synth, {
-				^event = this.getSynthEvent(name) 
+				event = this.getSynthEvent(name) 
 			},
 			\buffer, {
-				^event = this.getBufferEvent(name, index) 
+				event = this.getBufferEvent(name, index) 
 			},
 			{
 				"unrecognized searchMethod '%' for getEvent. Expecting 'auto'|'synth'|'buffer'".format(searchMethod).error;
 			};
 		);
-		^nil;
+		if (event.isNil) { "no sound % in library (% search)".format(~sound, searchMethod).error }
+		^event;
 	}
 
 

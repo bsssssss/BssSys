@@ -67,9 +67,7 @@ BssEvent {
 
 	resolveProtoEvent {
 		var soundEvent = bss.soundLibrary.getEvent(~sound, ~n, searchMethod);
-		if (soundEvent.isNil) {
-			"no sound % in library (% search)".format(~sound, searchMethod).error;
-		} {
+		if (soundEvent.notNil) {
 			currentEnvironment.proto = soundEvent;
 	calculateTimeSpan {
 		var sustain;
