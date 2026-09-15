@@ -1,14 +1,18 @@
 BssEvent {
-	var <bss, <event;
-	var <track, <effectChain, <synths, <gateSynth;
-	var <>searchMethod;
+	var <bss, <server, <event, <>searchMethod;
+	var <track, <group;
+	var <effectChain, <synths, <gateSynth;
 
 	*new { |bss, event|
-		^super.newCopyArgs(bss: bss, event: event).init;
+		^super.newCopyArgs(
+			bss: bss,
+			event: event
+		).init;
 	}
 
 	init {
 		track = bss.tracks.wrapAt(event[\track] ? 0);
+		server = bss.server;
 		synths = [];
 		effectChain = [];
 	}
@@ -31,7 +35,7 @@ BssEvent {
 				var name = synth.defName;
 				var msgFunc = this.getMsgFunc(name);
 				var args = msgFunc.valueEnvir.asControlInput;
-				bss.server.bind {
+				server.bind {
 					synth.set(*args) 
 				};
 			};
@@ -43,7 +47,7 @@ BssEvent {
 		if (fadeTime.notNil) {
 			args = args ++ [\fadeOut, fadeTime] 
 		};
-		bss.server.bind {
+		server.bind {
 			gateSynth.set(*args);
 		};
 	}
@@ -93,13 +97,13 @@ BssEvent {
 	}
 
 	createSynthGroup { |outerGroup|
-		~synthGroup = Group(outerGroup ? track.group);
+		group = Group(outerGroup ? track.group);
 	}
 
 	sendSynth { |instrument, args|
 		args = args ?? { this.getMsgFunc(instrument.asSymbol).valueEnvir };
 		args.asControlInput.flop.do { |argList|
-			var synth = Synth.tail(~synthGroup, instrument, argList);
+			var synth = Synth.tail(group, instrument, argList);
 			synths = synths.add(synth);
 		};
 	}
@@ -129,7 +133,7 @@ BssEvent {
 
 	sendGateSynth {
 		var name = "bss_gate";
-		var synth = Synth.tail(~synthGroup, name ++ ~numChannels, [
+		var synth = Synth.tail(group, name ++ ~numChannels, [
 			in: track.synthBus,
 			out: track.trackBus,
 			sustain: ~sustain,
