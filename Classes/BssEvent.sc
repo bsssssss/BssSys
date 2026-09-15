@@ -65,11 +65,11 @@ BssEvent {
 	}
 
 	resolveProtoEvent {
-		var event = bss.soundLibrary.getEvent(~sound, ~n, searchMethod);
-		if (event.isNil) {
+		var soundEvent = bss.soundLibrary.getEvent(~sound, ~n, searchMethod);
+		if (soundEvent.isNil) {
 			"no sound % in library (% search)".format(~sound, searchMethod).error;
 		} {
-			currentEnvironment.proto = event;
+			currentEnvironment.proto = soundEvent;
 		};
 	}
 
