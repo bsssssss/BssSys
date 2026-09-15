@@ -46,7 +46,6 @@ BssTrack {
 			~freq        = #{ ~midinote.value.midicps };
 			~n           = 0;
 			~amp         = 1.0;
-			~sustain     = 1.0;
 			~pan         = 0.0;
 			~gate        = 1;
 		}

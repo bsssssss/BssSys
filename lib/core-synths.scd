@@ -81,12 +81,13 @@
 	};
 
 	~bss.addSamplerModule('bufrd', { |bssEvent|
+		var sustain = if (~sustain == inf or: { ~sustain.isNil }) { ~buffer.duration } { ~sustain };
 		bssEvent.sendSynth("bss_sampler_bufrd" ++ ~bufNumChannels, [
 			bufnum: ~bufnum,
 			begin: ~begin,
 			freq: ~freq,
 			rate: ~rate,
-			sustain: ~sustain ? ~buffer.duration,
+			sustain: sustain,
 			pan: ~pan,
 			amp: ~amp,
 			out: ~out,

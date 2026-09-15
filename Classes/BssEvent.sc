@@ -57,7 +57,8 @@ BssEvent {
 
 	sendSourceSynth {
 		if (~buffer.notNil) { 
-			var sampler = ~sampler ? "bufrd";
+			var sampler = ~sampler ? \bufrd;
+			if (~sustain.isNil) { ~sustain = ~buffer.duration };
 			bss.moduleLibrary.samplers[sampler.asSymbol].value(this);
 		} {
 			if (~instrument.notNil) {
@@ -82,7 +83,7 @@ BssEvent {
 		var synth = Synth.tail(~synthGroup, name ++ ~numChannels, [
 			in: track.synthBus,
 			out: track.trackBus,
-			sustain: ~sustain,
+			sustain: ~sustain ? 1,
 			fadeIn: ~fadeIn ? 0,
 			fadeOut: ~fadeOut ? 0.04
 		]);
