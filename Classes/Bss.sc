@@ -151,27 +151,13 @@ Bss {
 	 */
 
 	// sounds 
-
-	snd { |name ...args, kwargs|
+	snd { |name , specs(#[]), searchMethod(\auto)|
 		var event = (sound: name);
-		kwargs.pairsDo { |k, v| event[k] = v };
-		^BssEvent(this, event).searchMethod_(\auto);
-	}
-
-	syn { |name ...args, kwargs|
-		var event = (sound: name);
-		kwargs.pairsDo { |k, v| event[k] = v };
-		^BssEvent(this, event).searchMethod_(\synth);
-	}
-
-	buf { |name ...args, kwargs|
-		var event = (sound: name);
-		kwargs.pairsDo { |k, v| event[k] = v };
-		^BssEvent(this, event).searchMethod_(\buffer);
+		event = event ++ specs;
+		^BssEvent(this, event, searchMethod);
 	}
 
 	// sequences 
-
 	seq {
 		^BssSeq(this.clock);
 	}

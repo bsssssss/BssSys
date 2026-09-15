@@ -3,10 +3,11 @@ BssEvent {
 	var <track, <group;
 	var <effectChain, <synths, <gateSynth;
 
-	*new { |bss, event|
+	*new { |bss, event, searchMethod|
 		^super.newCopyArgs(
 			bss: bss,
-			event: event
+			event: event,
+			searchMethod: searchMethod ? \auto,
 		).init;
 	}
 
