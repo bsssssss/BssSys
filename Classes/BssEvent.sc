@@ -23,8 +23,9 @@ BssEvent {
 		};
 	}
 
-	set { |...args|
+	set { |...args, kwargs|
 		args.pairsDo { |k, v| event.put(k, v) };
+		kwargs.pairsDo { |k, v| event.put(k, v) };
 		event.use {
 			synths.do { |synth|
 				var name = synth.defName;
