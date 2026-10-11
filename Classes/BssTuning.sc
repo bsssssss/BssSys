@@ -1,6 +1,6 @@
 BssTuning {
 	var <>current, <>default, <>octave;
-	var <>archivePath, <>tunings;
+	var <archivePath, <tunings;
 
 	*new { |default, octave, archivePath|
 		^super.newCopyArgs(

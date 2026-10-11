@@ -9,7 +9,7 @@
 		ReplaceOut.ar(out, sig * env);
 	}, [\ir]).add;
 
-	~bss.addEffectModule('fade_env', { |bssEvent|
+	~bss.addEffectModule('fade_env', #{ |bssEvent|
 		bssEvent.sendSynth("bss_fade_env" ++ ~numChannels, [
 			fadeIn: ~fadeIn ? 0.01,
 			fadeOut: ~fadeOut ? 0.01,

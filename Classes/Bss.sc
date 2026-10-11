@@ -4,7 +4,7 @@ Bss {
 	var <server, <numChannels;
 
 	var <tracks, <outBusses, <group;
-	var <moduleLibrary, <ml, <soundLibrary, <sl;
+	var <moduleLibrary, <soundLibrary;
 	var <tuning, <clock;
 
 	var <reaperProjectPath, <reaper;
@@ -18,9 +18,7 @@ Bss {
 
 	init {
 		moduleLibrary = BssModuleLibrary();
-		ml = moduleLibrary;
 		soundLibrary = BssSoundLibrary(server, numChannels);
-		sl = soundLibrary;
 
 		group = server.nextPermNodeID;
 		tuning = BssTuning();
@@ -29,9 +27,16 @@ Bss {
 		this.loadSynthDefs("../lib".resolveRelative);
 		ServerTree.add(this, server);
 
-		"*** Bss Sonic System initialized ! ***".postln;
-		"".postln;
+		"*** Bss Sonic System initialized ! ***\n\n".post;
 		moduleLibrary.show;
+	}
+
+	slib {
+		^soundLibrary;
+	}
+
+	mlib {
+		^moduleLibrary;
 	}
 
 	createTracks {
@@ -46,7 +51,6 @@ Bss {
 		tracks.do(_.initNodeTree);
 	}
 
-	// modules get added here as well
 	loadSynthDefs { |path|
 		var paths = pathMatch(standardizePath(path +/+ "*")).select(_.endsWith(".scd"));
 
@@ -63,22 +67,18 @@ Bss {
 	}
 
 
-	/*
-	 * Modules
-	 */
+	/* Modules */
 
 	addEffectModule { |name, func, cond|
-		moduleLibrary.add(\effect, name, func, cond);
+		moduleLibrary.addEffect(name, func, cond);
 	}
 
 	addSamplerModule { |name, func, cond|
-		moduleLibrary.add(\sampler, name, func, cond);
+		moduleLibrary.addSampler(name, func, cond);
 	}
 
 
-	/*
-	 * Reaper
-	 */
+	/* Reaper */
 
 	mkReaperProject {
 		var basePath, projectPath, masterFxNode, project, numTracks, tracks;
@@ -122,9 +122,8 @@ Bss {
 		reaper = ReaperControl.start;
 	}
 
-	/*
-	 * Startup
-	 */
+
+	/* Startup */
 
 	start { |busses([0]), withReaper(false)|
 		outBusses = busses.asArray;
@@ -137,18 +136,16 @@ Bss {
 		this.initNodeTree;
 	}
 
-	/*
-	 * Utils
-	 */
+
+	/* Utils */
 
 	show {
 		moduleLibrary.show;
 		soundLibrary.show;
 	}
 
-	/*
-	 * Playing
-	 */
+
+	/* Playing */
 
 	// sounds 
 	snd { |name , specs(#[]), searchMethod(\auto)|

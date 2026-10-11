@@ -35,17 +35,5 @@
 		snd = snd ! numChannels;
 		snd = BssPan.ar(snd, numChannels, \pan.kr(0));
 		Out.ar(out, snd)
-	}).add;
-
-	SynthDef("bss_sine", { |out, sustain(1), freq(440), amp(1), lag(0)|
-		var snd, env;
-
-		snd = SinOsc.ar(Lag.kr(freq, lag)) 
-			* AmpComp.ar(K2A.ar(freq), 20) 
-			* amp;
-
-		snd = snd ! numChannels;
-		snd = BssPan.ar(snd, numChannels, \pan.kr(0));
-		Out.ar(out, snd)
-	}).add;
+	}, [\ir]).add;
 )

@@ -1,15 +1,15 @@
 BssModule {
-	var <name, <func, <cond;
+	var <name, <func, <cond, <kind;
 
-	*new { |name, func, cond|
-		^this.newCopyArgs(name, func, cond ? true);
+	*new { |name, func, cond, kind|
+		^this.newCopyArgs(name, func, cond ? true, kind);
 	}
 
-	value { |event|
-		if (cond.value) { func.value(event) };
-	}
-
-	specs {
-		^[name, func, cond];
+	value { |bssEvent, specs|
+		var env = (specs ? ()).asEvent.copy;
+		env.parent = bssEvent.event;
+		env.use {
+			if (cond.value) { func.value(bssEvent) };
+		};
 	}
 }

@@ -29,38 +29,51 @@ BssEvent {
 	}
 
 	set { |...args, kwargs|
-		args.pairsDo { |k, v| event.put(k, v) };
-		kwargs.pairsDo { |k, v| event.put(k, v) };
-		event.use {
-			synths.do { |synth|
-				var name = synth.defName;
-				var msgFunc = this.getMsgFunc(name);
-				var args = msgFunc.valueEnvir.asControlInput;
-				server.bind {
-					synth.set(*args) 
-				};
-			};
+		var synth, ev = ();
+		args.pairsDo { |k, v| ev.put(k, v) };
+		kwargs.pairsDo { |k, v| ev.put(k, v) };
+		if (ev.isNil) { ^this };
+
+		// target source synth only
+		synth = synths[0];
+
+		ev.parent = event;
+		ev.use {
+			// valueEnvir.asControlInput allows passing defaultParentEvent
+			// params like 'note'
+			var specs = this.getMsgFunc(synth.defName).valueEnvir.asControlInput;
+			server.bind { synth.set(*specs) };
 		};
 	}
 
 	release { |fadeTime|
-		var args = [\gate, 0];
+		var specs = [\gate, 0];
 		if (fadeTime.notNil) {
-			args = args ++ [\fadeOut, fadeTime] 
+			specs = specs ++ [\fadeOut, fadeTime] 
 		};
 		server.bind {
-			gateSynth.set(*args);
+			gateSynth.set(*specs);
 		};
 	}
 
-	addFx { |name, args|
-		if (name.notNil) {
-			effectChain = effectChain.add([name.asSymbol, args ? #[]]);
-		};
+	addFx { |name, specs|
+		var fx, withSpecs;
+		if (name.isNil) { ^this };
+
+		fx = bss.moduleLibrary.atEffect(name);
+		if (fx.isNil) { ^this };
+
+		effectChain = effectChain.add((module: fx, specs: specs));
 	}
 
 	effectChain_ { |specArray|
 		effectChain = specArray.select(_.notNil);
+	}
+
+	sendEffectChain {
+		effectChain.do { |fx|
+			fx.module.value(this, fx.specs); 
+		};
 	}
 
 	resolveSoundName {
@@ -101,9 +114,9 @@ BssEvent {
 		group = Group(outerGroup ? track.group);
 	}
 
-	sendSynth { |instrument, args|
-		args = args ?? { this.getMsgFunc(instrument.asSymbol).valueEnvir };
-		args.asControlInput.flop.do { |argList|
+	sendSynth { |instrument, specs|
+		specs = specs ?? { this.getMsgFunc(instrument.asSymbol).valueEnvir };
+		specs.asControlInput.flop.do { |argList|
 			var synth = Synth.tail(group, instrument, argList);
 			synths = synths.add(synth);
 		};
@@ -111,25 +124,13 @@ BssEvent {
 
 	sendSourceSynth {
 		if (~buffer.notNil) { 
-			var sampler = ~sampler ? \bufrd;
-			bss.moduleLibrary.samplers[sampler.asSymbol].value(this);
+			var name = ~sampler ? \bufrd;
+			bss.moduleLibrary.atSampler(name).value(this);
 		} {
 			if (~instrument.notNil) {
 				this.sendSynth(~instrument);
 			}
 		}
-	}
-
-	sendEffectChain {
-		effectChain.do { |spec|
-			var name, fxEvent;
-			name = spec[0].asSymbol;
-			fxEvent = spec[1].asEvent;
-			fxEvent.parent = event;
-			fxEvent.use {
-				bss.moduleLibrary.effects[name].value(this) 
-			};
-		};
 	}
 
 	sendGateSynth {
@@ -145,7 +146,7 @@ BssEvent {
 	}
 
 	playSynths {
-		track.server.bind {
+		server.bind {
 			this.createSynthGroup;
 			this.sendSourceSynth;
 			this.sendEffectChain;

@@ -1,38 +1,60 @@
+
 BssModuleLibrary {
-	var <modules, <effects, <samplers, <types;
+	var <modules;
 
 	*new {
 		^super.newCopyArgs().init;
 	}
 
 	init {
-		types = [\effect, \sampler];
 		modules = IdentityDictionary();
-		effects = IdentityDictionary();
-		samplers = IdentityDictionary();
-		modules.put(\effect, effects);
-		modules.put(\sampler, samplers);
 	}
 
-	add { |type, name, func, cond|
-		var module;
-		if (types.indexOf(type).isNil) {
-			"unrecognized module type %. Expecting %".format(type, types).error;
+	add { |name, func, cond, role|
+		var m;
+		name = name.asSymbol;
+		m = BssModule(name, func, cond, role);
+		modules.put(name, m);
+	}
+
+	addEffect { |name, func, cond|
+		this.add(name, func, cond, \effect);
+		"effect modules <- % ".format(name).postln;
+	}
+
+	addSampler { |name, func, cond|
+		this.add(name, func, cond, \sampler);
+		"sampler modules <- % ".format(name).postln;
+	}
+
+	at { |name|
+		var m = modules.at(name.asSymbol);
+		if (m.isNil) {
+			"could not find module '%' in module lib".format(name).warn;
+		};
+		^m;
+	}
+
+	atKind { |name, kind|
+		var m = this.at(name);
+		if (m.notNil and: { m.kind.notNil } and: { m.kind != kind.asSymbol }) {
+			"% exists but is of kind %, not %".format(name, m.kind, kind).warn;
 			^nil;
 		};
-		name = name.asSymbol;
-		module = BssModule(name, func, cond);
-		modules[type].put(name, module);
+		^m;
+	}
+
+	atEffect { |name|
+		^this.atKind(name, \effect);
+	}
+
+	atSampler { |name|
+		^this.atKind(name, \sampler);
 	}
 
 	show {
 		"Module Library:".postln;
-		modules.keysValuesDo { |k, v|
-			format("% (% module%)", k, v.size, if(v.size > 1, "s", "")).postln;
-			v.do { |module, i|
-				("\t* " ++ module.name).postln; 
-			};
-		};
+		"!!! WIP !!!".postln;
 		"".postln;
 	}
 }
