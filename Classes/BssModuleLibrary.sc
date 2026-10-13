@@ -1,14 +1,8 @@
-
 BssModuleLibrary {
 	var <modules;
 
-	*new {
-		^super.newCopyArgs().init;
-	}
-
-	init {
-		modules = IdentityDictionary();
-	}
+	*new { ^super.newCopyArgs().init; }
+	init { modules = IdentityDictionary(); }
 
 	add { |name, func, cond, role|
 		var m;
@@ -44,13 +38,8 @@ BssModuleLibrary {
 		^m;
 	}
 
-	atEffect { |name|
-		^this.atKind(name, \effect);
-	}
-
-	atSampler { |name|
-		^this.atKind(name, \sampler);
-	}
+	atEffect  { |name| ^this.atKind(name, \effect); }
+	atSampler { |name| ^this.atKind(name, \sampler); }
 
 	show {
 		"Module Library:".postln;

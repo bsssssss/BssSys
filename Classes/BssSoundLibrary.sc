@@ -16,15 +16,12 @@ BssSoundLibrary {
 		banks = IdentityDictionary();
 	}
 
-	/*
-	 * SOUND FILES
-	 */
-
 	freeSoundFiles { |names|
 		names.asArray.do { |name|
 			if (buffers[name].isNil) {
-				format("cannot free sound files. Could not find '%' in sound library", name).warn; 
+				format("'%' not in sound library, doing nothing", name).warn; 
 			} {
+				format("freeing '%' in sound library", name).postln; 
 				buffers.removeAt(name).asArray.do { |b| b.free };
 				bufferEvents.removeAt(name);
 			};
@@ -145,11 +142,6 @@ BssSoundLibrary {
 		^BssBuffer.readWithInfo(server, path, onlyHeader: doNotReadYet);
 	}
 
-
-	/*
-	 * Set
-	 */
-
 	addBuffer { |buffer, name|
 		var event = this.makeBufferEvent(buffer);
 		buffers[name] = buffers[name].add(buffer);
@@ -172,11 +164,6 @@ BssSoundLibrary {
 		);
 		^event;
 	}
-
-
-	/*
-	 * Get
-	 */
 
 	at { |name|
 		^bufferEvents[name];
@@ -218,11 +205,6 @@ BssSoundLibrary {
 		if (event.isNil) { "no sound % in library (% search)".format(~sound, searchMethod).error }
 		^event;
 	}
-
-
-	/*
-	 * Show
-	 */
 
 	show {
 		"Sound Library:".postln;

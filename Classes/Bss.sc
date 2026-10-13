@@ -31,13 +31,8 @@ Bss {
 		moduleLibrary.show;
 	}
 
-	slib {
-		^soundLibrary;
-	}
-
-	mlib {
-		^moduleLibrary;
-	}
+	slib { ^soundLibrary; }
+	mlib { ^moduleLibrary; }
 
 	createTracks {
 		outBusses.do { |outBus, id|
