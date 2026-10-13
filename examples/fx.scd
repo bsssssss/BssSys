@@ -1,39 +1,40 @@
 (
-	s.waitForBoot {
-		~bss = Bss();
-		~bss.start; s.sync;
-		~bss.sounds.show;
-	};
+s.waitForBoot {
+    ~bss = Bss();
+    ~bss.start; s.sync;
+    ~bss.sounds.show;
+};
 )
 
 s.plotTree;
 
 (
-	// .addFx(\name, [specs]) to append an effect to the chain
-	~bss.snd(\bss_sine, [freq: 100 * exprand(1,40), sustain: 1])
-		.addFx(\tilt_env, [tilt: 0.5, curveRise: 8])
-		.play;
+// .addFx(\name, [specs]) to append an effect to the chain
+~bss.snd(\bss_sine, [freq: 100 * exprand(1,40), sustain: 1])
+    .addFx(\tilt_env, [tilt: 0.5, curveRise: 8])
+    .play;
 )
+
 (
-	// [specs] takes precedence over parent specs
-	~bss.snd(\bss_sine, [freq: 100 * exprand(1,40), sustain: 10])
-		.addFx(\tilt_env, [tilt: 0.0, curveRise: 4, sustain: 0.01])
-		.addFx(\gverb, [decay: 10, size: exprand(1,100)])
-		.play;
+// [specs] takes precedence over parent specs
+~bss.snd(\bss_sine, [freq: 100 * exprand(1,40), sustain: 10])
+    .addFx(\tilt_env, [tilt: 0.0, curveRise: 4, sustain: 0.01])
+    .addFx(\gverb, [decay: 10, size: exprand(1,100)])
+    .play;
 )
+
 (
-	// [specs] takes precedence over parent specs
-	// 10 seconds sustain
-	~bss.snd(\bss_sine, [freq: exprand(100,1000), sustain: 10]) 
-		.addFx(\tilt_env, [tilt: 0.0, curveRise: 4, sustain: 0.2])
-		.addFx(\gverb, [decay: 100000, size: 150])
-		// but envelope cut after 1 second
-		.addFx(\tilt_env, [tilt: 0.9, hold: 0.2, curveRise: 8, sustain: 1]) 
-		// synth will still play for 10 seconds
-		.play;
+// [specs] takes precedence over parent specs
+// 10 seconds sustain
+~bss.snd(\bss_sine, [freq: exprand(100,1000), sustain: 10]) 
+    .addFx(\tilt_env, [tilt: 0.0, curveRise: 4, sustain: 0.2])
+    .addFx(\gverb, [decay: 100000, size: 150])
+    // but envelope cut after 1 second
+    .addFx(\tilt_env, [tilt: 0.9, hold: 0.2, curveRise: 8, sustain: 1]) 
+    // synth will still play for 10 seconds
+    .play;
 )
-100.pow(2)
-r = s.record;
+
 (
 	// can call an effect multiple times
 	~r1 = r {
@@ -59,7 +60,5 @@ r = s.record;
 		}
 	}.play;
 )
-~r1.stop;
-r.isRecording;
-r.stopRecording;
 
+~r1.stop;
