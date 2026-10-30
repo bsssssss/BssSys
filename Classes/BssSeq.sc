@@ -8,7 +8,17 @@ BssSeq {
 	}
 
 	repeat { |steps(1), dt(1), cb, onDone, fork(false)|
-		^this.steps(steps, dt, cb, onDone, fork);
+		var f = {
+			dt = dt.asArray;
+			steps.do { |i|
+				var phase = i / steps;
+				var wt = dt.wrapAt(i);
+				cb.value(i, phase, wt);
+				wt.wait;
+			};
+			onDone.value;
+		};
+		if (fork) { ^f.fork(clock) } { ^f };
 	}
 
 	while { |duration(1), times(1), cb, onDone, fork(false)|
