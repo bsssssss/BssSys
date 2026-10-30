@@ -94,12 +94,11 @@ BssSoundLibrary {
 			^this;
 		};
 
-		format("loading '%' to '%'", folderPath, name).postln;
+		format("loading '%' to '%' (% files)", folderPath, name, filePaths.size).postln;
 		filePaths.do { |path|
 			this.loadSoundFile(path, name, method);
 			method = \append;
 		};
-		"".postln;
 	}
 
 	loadSoundFile { |path, name, method(\replace)|
@@ -126,7 +125,7 @@ BssSoundLibrary {
 			this.freeSoundFiles(name);
 		};
 
-		format("appending '%' to '%'", fileName, name).postln;
+		//format("appending '%' to '%'", fileName, name).postln;
 		this.addBuffer(buf, name);
 	}
 
