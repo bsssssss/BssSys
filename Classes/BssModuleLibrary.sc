@@ -13,12 +13,12 @@ BssModuleLibrary {
 
 	addEffect { |name, func, cond|
 		this.add(name, func, cond, \effect);
-		"effect modules <- % ".format(name).postln;
+		// "effect modules <- % ".format(name).postln;
 	}
 
 	addSampler { |name, func, cond|
 		this.add(name, func, cond, \sampler);
-		"sampler modules <- % ".format(name).postln;
+		// "sampler modules <- % ".format(name).postln;
 	}
 
 	at { |name|

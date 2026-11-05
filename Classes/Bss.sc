@@ -27,8 +27,7 @@ Bss {
 		this.loadSynthDefs("../lib".resolveRelative);
 		ServerTree.add(this, server);
 
-		"*** Bss Sonic System initialized ! ***\n\n".post;
-		moduleLibrary.show;
+		"ready.".postln;
 	}
 
 	slib { ^soundLibrary; }
