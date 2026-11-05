@@ -1,16 +1,15 @@
 BssEvent {
-	var <bss, <server;
-	var <event;
-	var <specs;
+	var <bss, <server, <event;
+	var <specs, <env, <source;
 	var <track, <group;
 	var <effectChain, <synths, <gateSynth;
 
-	*new { |bss, event|
-		^super.newCopyArgs(bss: bss, event: event).init;
+	*new { |bss, specs|
+		^super.newCopyArgs(bss: bss, specs: specs).init;
 	}
 
 	init {
-		track = bss.tracks.wrapAt(event[\track] ? 0);
+		track = bss.tracks.wrapAt(specs[\track] ? 0);
 		server = bss.server;
 		synths = [];
 		effectChain = [];
@@ -81,26 +80,33 @@ BssEvent {
 	}
 
 	resolveSource { ^this.subclassResponsibility(thisMethod) }
+	defaultSustain { ^this.subclassResponsibility(thisMethod) }
 
 	play {
-		event.parent = track.defaultParentEvent;
-		event.use {
-			this.resolveSource; // implementation in subclasses
+		env = specs.copy;
+		env.parent = track.defaultParentEvent;
+		env.use {
+			source = this.resolveSource; // implementation in subclasses
+			if (source.isNil) { ^this };
+			env.put(\sustain, specs[\sustain] ? this.defaultSustain);
+			currentEnvironment.proto = source; 
 			this.playSynths;
 		};
 	}
 
 	set { |...args, kwargs|
-		var synth, ev = ();
-		args.pairsDo { |k, v| ev.put(k, v) };
-		kwargs.pairsDo { |k, v| ev.put(k, v) };
-		if (ev.isNil) { ^this };
+		var synth;
+
+		var e = ();
+		args.pairsDo { |k, v| e.put(k, v) };
+		kwargs.pairsDo { |k, v| e.put(k, v) };
+		if (e.isNil) { ^this };
 
 		// target source synth only
 		synth = synths[0];
 
-		ev.parent = event;
-		ev.use {
+		e.parent = env;
+		e.use {
 			// valueEnvir.asControlInput allows passing defaultParentEvent params like 'note'
 			var specs = this.getMsgFunc(synth.defName).valueEnvir.asControlInput;
 			server.bind { synth.set(*specs) };
@@ -126,54 +132,40 @@ BssEvent {
 
 BssBufferEvent : BssEvent {
 	resolveSource {
-		var name, event;
-		name = ~s ? ~sound;
-		if (~bank.notNil) {
-			name = format("%_%", ~bank, name) 
-		};
-		~sound = name.asSymbol;
+		var name = specs[\sound];
+		var bank = specs[\bank];
 
-		event = bss.soundLibrary.getBufferEvent(~sound, ~n);
-		if (event.notNil) {
-			currentEnvironment.proto = event; 
-			~sustain = ~sustain ? ~buffer.duration;
+		if (bank.notNil) {
+			name = format("%_%", bank, name) 
 		};
+
+		^bss.soundLibrary.getBufferEvent(name, specs[\n] ? 0);
 	}
 
+	defaultSustain { ^source[\duration] }
+
 	sendSourceSynth {
-		var samplerModule = ~sampler ? \bufrd;
-		if (~buffer.notNil) {
-			bss.moduleLibrary.atSampler(samplerModule).value(this); 
-		};
+		bss.moduleLibrary.atSampler(specs[\sampler] ? \bufrd).value(this); 
 	}
 }
 
 BssSynthEvent : BssEvent {
 	getSynthEvent { |name|
-		var synthDesc;
-		synthDesc = SynthDescLib.at(name.asSymbol);
-		if (synthDesc.notNil) {
-			^(instrument: synthDesc.name);
+		var synthDesc = SynthDescLib.at(name.asSymbol);
+		if (synthDesc.isNil) {
+			"no synth named % in SynthDescLib".format(name).warn;
+			^nil;
 		};
-		"no synth named % in SynthDescLib".format(name).warn;
-		^nil;
+		^(instrument: synthDesc.name);
 	}
 
 	resolveSource {
-		var name, event;
-		name = ~s ? ~sound;
-		~sound = name.asSymbol;
-
-		event = this.getSynthEvent(~sound);
-		if (event.notNil) {
-			currentEnvironment.proto = event; 
-			~sustain = ~sustain ? 1;
-		};
+		^this.getSynthEvent(specs[\sound]);
 	}
 
+	defaultSustain { ^1 }
+
 	sendSourceSynth {
-		if (~instrument.notNil) {
-			this.sendSynth(~instrument);
-		}
+		this.sendSynth(source[\instrument]);
 	}
 }
