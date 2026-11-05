@@ -5,10 +5,7 @@ BssEvent {
 	var <effectChain, <synths, <gateSynth;
 
 	*new { |bss, event|
-		^super.newCopyArgs(
-			bss: bss,
-			event: event,
-		).init;
+		^super.newCopyArgs(bss: bss, event: event).init;
 	}
 
 	init {
@@ -16,29 +13,6 @@ BssEvent {
 		server = bss.server;
 		synths = [];
 		effectChain = [];
-	}
-
-	resolveSource { ^this.subclassResponsibility(thisMethod) }
-	sendSourceSynth { ^this.subclassResponsibility(thisMethod) }
-
-	addFx { |name, specs|
-		var fx;
-		if (name.isNil) { ^this };
-
-		fx = bss.moduleLibrary.atEffect(name);
-		if (fx.isNil) { ^this };
-
-		effectChain = effectChain.add((module: fx, specs: specs));
-	}
-
-	effectChain_ { |specArray|
-		effectChain = specArray.select(_.notNil);
-	}
-
-	sendEffectChain {
-		effectChain.do { |fx|
-			fx.module.value(this, fx.specs); 
-		};
 	}
 
 	getMsgFunc { |instrument|
@@ -62,6 +36,8 @@ BssEvent {
 		};
 	}
 
+	sendSourceSynth { ^this.subclassResponsibility(thisMethod) }
+
 	sendGateSynth {
 		var name = "bss_gate";
 		var synth = Synth.tail(group, name ++ ~numChannels, [
@@ -74,6 +50,26 @@ BssEvent {
 		gateSynth = synth;
 	}
 
+	addFx { |name, specs|
+		var fx;
+		if (name.isNil) { ^this };
+
+		fx = bss.moduleLibrary.atEffect(name);
+		if (fx.isNil) { ^this };
+
+		effectChain = effectChain.add((module: fx, specs: specs));
+	}
+
+	effectChain_ { |specArray|
+		effectChain = specArray.select(_.notNil);
+	}
+
+	sendEffectChain {
+		effectChain.do { |fx|
+			fx.module.value(this, fx.specs); 
+		};
+	}
+
 	playSynths {
 		server.bind {
 			this.createSynthGroup;
@@ -82,6 +78,8 @@ BssEvent {
 			this.sendGateSynth; // LAST
 		}
 	}
+
+	resolveSource { ^this.subclassResponsibility(thisMethod) }
 
 	play {
 		event.parent = track.defaultParentEvent;
