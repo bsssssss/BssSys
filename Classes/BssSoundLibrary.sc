@@ -168,41 +168,13 @@ BssSoundLibrary {
 		^bufferEvents[name];
 	}
 
-	getSynthEvent { |name|
-		var synthDesc;
-		synthDesc = SynthDescLib.at(name.asSymbol);
-		if (synthDesc.notNil) {
-			^(instrument: synthDesc.name);
-		};
-		^nil;
-	}
-
 	getBufferEvent { |name, index|
 		var events = this.at(name.asSymbol);
 		if (events.notNil) {
 			^events.wrapAt(index.asInteger) 
 		};
+		"'%' is not registered in sound library".format(name).warn;
 		^nil;
-	}
-
-	getEvent { |name, index, searchMethod(\auto)| 
-		var event;
-		switch (searchMethod,
-			\auto, {
-				event = this.getBufferEvent(name, index) ? this.getSynthEvent(name) 
-			},
-			\synth, {
-				event = this.getSynthEvent(name) 
-			},
-			\buffer, {
-				event = this.getBufferEvent(name, index) 
-			},
-			{
-				"unrecognized searchMethod '%' for getEvent. Expecting 'auto'|'synth'|'buffer'".format(searchMethod).error;
-			};
-		);
-		if (event.isNil) { "no sound % in library (% search)".format(~sound, searchMethod).error }
-		^event;
 	}
 
 	show {

@@ -1,13 +1,13 @@
 BssEvent {
-	var <bss, <server, <event, <>searchMethod;
+	var <bss, <server;
+	var <event;
 	var <track, <group;
 	var <effectChain, <synths, <gateSynth;
 
-	*new { |bss, event, searchMethod|
+	*new { |bss, event|
 		^super.newCopyArgs(
 			bss: bss,
 			event: event,
-			searchMethod: searchMethod ? \auto,
 		).init;
 	}
 
@@ -18,46 +18,11 @@ BssEvent {
 		effectChain = [];
 	}
 
-	play {
-		event.parent = track.defaultParentEvent;
-		event.use {
-			this.resolveSoundName;
-			this.resolveProtoEvent;
-			this.calculateTimeSpan;
-			this.playSynths;
-		};
-	}
-
-	set { |...args, kwargs|
-		var synth, ev = ();
-		args.pairsDo { |k, v| ev.put(k, v) };
-		kwargs.pairsDo { |k, v| ev.put(k, v) };
-		if (ev.isNil) { ^this };
-
-		// target source synth only
-		synth = synths[0];
-
-		ev.parent = event;
-		ev.use {
-			// valueEnvir.asControlInput allows passing defaultParentEvent
-			// params like 'note'
-			var specs = this.getMsgFunc(synth.defName).valueEnvir.asControlInput;
-			server.bind { synth.set(*specs) };
-		};
-	}
-
-	release { |fadeTime|
-		var specs = [\gate, 0];
-		if (fadeTime.notNil) {
-			specs = specs ++ [\fadeOut, fadeTime] 
-		};
-		server.bind {
-			gateSynth.set(*specs);
-		};
-	}
+	resolveSource { ^this.subclassResponsibility(thisMethod) }
+	sendSourceSynth { ^this.subclassResponsibility(thisMethod) }
 
 	addFx { |name, specs|
-		var fx, withSpecs;
+		var fx;
 		if (name.isNil) { ^this };
 
 		fx = bss.moduleLibrary.atEffect(name);
@@ -76,37 +41,12 @@ BssEvent {
 		};
 	}
 
-	resolveSoundName {
-		var sound = ~s ? ~sound;
-		if (~bank.notNil) {
-			sound = format("%_%", ~bank, sound) 
-		};
-		~sound = sound.asSymbol;
-	}
-
-	resolveProtoEvent {
-		var soundEvent = bss.soundLibrary.getEvent(~sound, ~n, searchMethod);
-		if (soundEvent.notNil) {
-			currentEnvironment.proto = soundEvent;
-		}
-	}
-
-	calculateTimeSpan {
-		var sustain;
-		if (~buffer.notNil) {
-			sustain = ~sustain ? ~buffer.duration;
-		} {
-			sustain = ~sustain ? 1;
-		};
-		~sustain = sustain;
-	}
-
-	getMsgFunc { |intrument|
-		var msgFunc = SynthDescLib.global.synthDescs.at(intrument).msgFunc;
+	getMsgFunc { |instrument|
+		var msgFunc = SynthDescLib.global.synthDescs.at(instrument).msgFunc;
 		if (msgFunc.notNil) {
 			^msgFunc;
 		} {
-			format( "could not get msgFunc for '%'", intrument).error;
+			format( "could not get msgFunc for '%'", instrument).error;
 		};
 	}
 
@@ -120,17 +60,6 @@ BssEvent {
 			var synth = Synth.tail(group, instrument, argList);
 			synths = synths.add(synth);
 		};
-	}
-
-	sendSourceSynth {
-		if (~buffer.notNil) { 
-			var name = ~sampler ? \bufrd;
-			bss.moduleLibrary.atSampler(name).value(this);
-		} {
-			if (~instrument.notNil) {
-				this.sendSynth(~instrument);
-			}
-		}
 	}
 
 	sendGateSynth {
@@ -148,15 +77,104 @@ BssEvent {
 	playSynths {
 		server.bind {
 			this.createSynthGroup;
-			this.sendSourceSynth;
+			this.sendSourceSynth; // implementation in subclasses
 			this.sendEffectChain;
 			this.sendGateSynth; // LAST
 		}
 	}
 
+	play {
+		event.parent = track.defaultParentEvent;
+		event.use {
+			this.resolveSource; // implementation in subclasses
+			this.playSynths;
+		};
+	}
+
+	set { |...args, kwargs|
+		var synth, ev = ();
+		args.pairsDo { |k, v| ev.put(k, v) };
+		kwargs.pairsDo { |k, v| ev.put(k, v) };
+		if (ev.isNil) { ^this };
+
+		// target source synth only
+		synth = synths[0];
+
+		ev.parent = event;
+		ev.use {
+			// valueEnvir.asControlInput allows passing defaultParentEvent params like 'note'
+			var specs = this.getMsgFunc(synth.defName).valueEnvir.asControlInput;
+			server.bind { synth.set(*specs) };
+		};
+	}
+
+	release { |fadeTime|
+		var specs = [\gate, 0];
+		if (fadeTime.notNil) {
+			specs = specs ++ [\fadeOut, fadeTime] 
+		};
+		server.bind {
+			gateSynth.set(*specs);
+		};
+	}
+
 	show { |event|
 		event.keysValuesDo { |k, v|
 			format("%: %", k, v).postln;
+		}
+	}
+}
+
+BssBufferEvent : BssEvent {
+	resolveSource {
+		var name, event;
+		name = ~s ? ~sound;
+		if (~bank.notNil) {
+			name = format("%_%", ~bank, name) 
+		};
+		~sound = name.asSymbol;
+
+		event = bss.soundLibrary.getBufferEvent(~sound, ~n);
+		if (event.notNil) {
+			currentEnvironment.proto = event; 
+			~sustain = ~sustain ? ~buffer.duration;
+		};
+	}
+
+	sendSourceSynth {
+		var samplerModule = ~sampler ? \bufrd;
+		if (~buffer.notNil) {
+			bss.moduleLibrary.atSampler(samplerModule).value(this); 
+		};
+	}
+}
+
+BssSynthEvent : BssEvent {
+	getSynthEvent { |name|
+		var synthDesc;
+		synthDesc = SynthDescLib.at(name.asSymbol);
+		if (synthDesc.notNil) {
+			^(instrument: synthDesc.name);
+		};
+		"no synth named % in SynthDescLib".format(name).warn;
+		^nil;
+	}
+
+	resolveSource {
+		var name, event;
+		name = ~s ? ~sound;
+		~sound = name.asSymbol;
+
+		event = this.getSynthEvent(~sound);
+		if (event.notNil) {
+			currentEnvironment.proto = event; 
+			~sustain = ~sustain ? 1;
+		};
+	}
+
+	sendSourceSynth {
+		if (~instrument.notNil) {
+			this.sendSynth(~instrument);
 		}
 	}
 }

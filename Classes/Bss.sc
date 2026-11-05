@@ -27,7 +27,7 @@ Bss {
 		this.loadSynthDefs("../lib".resolveRelative);
 		ServerTree.add(this, server);
 
-		"ready.".postln;
+		"ready.\n\n".post;
 	}
 
 	slib { ^soundLibrary; }
@@ -57,9 +57,7 @@ Bss {
 			format("loading '%'", p.basename).postln;
 			(bss: this).use { p.load };
 		};
-		"".postln;
 	}
-
 
 	/* Modules */
 
@@ -70,7 +68,6 @@ Bss {
 	addSamplerModule { |name, func, cond|
 		moduleLibrary.addSampler(name, func, cond);
 	}
-
 
 	/* Reaper */
 
@@ -116,7 +113,6 @@ Bss {
 		reaper = ReaperControl.start;
 	}
 
-
 	/* Startup */
 
 	start { |busses([0]), withReaper(false)|
@@ -130,7 +126,6 @@ Bss {
 		this.initNodeTree;
 	}
 
-
 	/* Utils */
 
 	show {
@@ -138,17 +133,18 @@ Bss {
 		soundLibrary.show;
 	}
 
-
 	/* Playing */
 
-	// sounds 
-	snd { |name , specs(#[]), searchMethod(\auto)|
-		var event = (sound: name);
-		event = event ++ specs;
-		^BssEvent(this, event, searchMethod);
+	snd { |name, specs|
+		specs = (sound: name) ++ (specs ? ()).asEvent;
+		^BssBufferEvent(this, specs);
 	}
 
-	// sequences 
+	syn { |name, specs|
+		specs = (sound: name) ++ (specs ? ()).asEvent;
+		^BssSynthEvent(this, specs);
+	}
+
 	seq {
 		^BssSeq(this.clock);
 	}
