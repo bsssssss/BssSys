@@ -1,6 +1,7 @@
 BssEvent {
 	var <bss, <server;
 	var <event;
+	var <specs;
 	var <track, <group;
 	var <effectChain, <synths, <gateSynth;
 
