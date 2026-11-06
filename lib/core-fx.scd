@@ -18,7 +18,6 @@ SynthDef("bss_fade_env" ++ numChannels, {
     ])
 });
 
-
 SynthDef("bss_tilt_env" ++ numChannels, { 
     |out, sustain, tilt(0.5), hold(0), curveRise(0), curveFall(0)|
     var sig;
@@ -37,7 +36,6 @@ SynthDef("bss_tilt_env" ++ numChannels, {
         out: ~out,
     ])
 });
-
 
 SynthDef("bss_gverb" ++ numChannels, { 
     |out, sustain, roomsize(14), revtime(1.2)|
