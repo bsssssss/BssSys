@@ -56,7 +56,7 @@ BssEvent {
 		var fx;
 		if (name.isNil) { ^this };
 
-		fx = bss.moduleLibrary.atEffect(name);
+		fx = bss.moduleLibrary.effects.at(name);
 		if (fx.isNil) { ^this };
 
 		effectChain = effectChain.add((module: fx, specs: specs));
@@ -142,15 +142,14 @@ BssBufferEvent : BssEvent {
 		if (bank.notNil) {
 			name = format("%_%", bank, name) 
 		};
+		// TODO: what if specs[\n] is an array ?
 		^bss.soundLibrary.getBufferEvent(name, specs[\n] ? 0);
 	}
 
 	defaultSustain { ^source[\duration] }
 
 	sendSourceSynth {
-		sourceSynths = bss.moduleLibrary
-			.atSampler(specs[\sampler] ? \bufrd)
-			.value(this); 
+		sourceSynths = bss.moduleLibrary.samplers.at(specs[\sampler] ? \bufrd).value(this); 
 	}
 }
 
