@@ -79,7 +79,7 @@ SynthDef("bss_gate" ++ numChannels, { |in, out, sustain, gate(1), fadeIn(0), fad
     }).add;
 };
 
-~bss.addSamplerModule('bufrd', { |bssEvent|
+~bss.addSamplerModule('bufrd', #{ |bssEvent|
     bssEvent.sendSynth("bss_sampler_bufrd" ++ ~bufNumChannels, [
         bufnum: ~bufnum,
         begin: ~begin,
