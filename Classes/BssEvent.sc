@@ -1,8 +1,8 @@
 BssEvent {
 	var <bss, <server, <event;
-	var <specs, <env, <source;
 	var <track, <group;
-	var <effectChain, <synths, <gateSynth;
+	var <specs, <env, <source;
+	var <>sourceSynths, <effectChain, <gateSynth;
 
 	*new { |bss, specs|
 		^super.newCopyArgs(bss: bss, specs: specs).init;
@@ -11,7 +11,7 @@ BssEvent {
 	init {
 		track = bss.tracks.wrapAt(specs[\track] ? 0);
 		server = bss.server;
-		synths = [];
+		sourceSynths = [];
 		effectChain = [];
 	}
 
@@ -29,11 +29,13 @@ BssEvent {
 	}
 
 	sendSynth { |instrument, specs|
+		var synths = [];
 		specs = specs ?? { this.getMsgFunc(instrument.asSymbol).valueEnvir };
 		specs.asControlInput.flop.do { |argList|
 			var synth = Synth.tail(group, instrument, argList);
 			synths = synths.add(synth);
 		};
+		^synths;
 	}
 
 	sendSourceSynth { ^this.subclassResponsibility(thisMethod) }
@@ -80,6 +82,7 @@ BssEvent {
 	}
 
 	resolveSource { ^this.subclassResponsibility(thisMethod) }
+
 	defaultSustain { ^this.subclassResponsibility(thisMethod) }
 
 	play {
@@ -95,22 +98,24 @@ BssEvent {
 	}
 
 	set { |...args, kwargs|
-		var synth;
-
-		var e = ();
-		args.pairsDo { |k, v| e.put(k, v) };
-		kwargs.pairsDo { |k, v| e.put(k, v) };
-		if (e.isNil) { ^this };
-
-		// target source synth only
-		synth = synths[0];
-
-		e.parent = env;
-		e.use {
-			// valueEnvir.asControlInput allows passing defaultParentEvent params like 'note'
-			var specs = this.getMsgFunc(synth.defName).valueEnvir.asControlInput;
-			server.bind { synth.set(*specs) };
-		};
+		"set method not implemented".warn;
+		^this;
+		// var synth;
+		//
+		// var e = ();
+		// args.pairsDo { |k, v| e.put(k, v) };
+		// kwargs.pairsDo { |k, v| e.put(k, v) };
+		// if (e.isNil) { ^this };
+		//
+		// // target source synth only
+		// synth = synths[0];
+		//
+		// e.parent = env;
+		// e.use {
+		// 	// valueEnvir.asControlInput allows passing defaultParentEvent params like 'note'
+		// 	var specs = this.getMsgFunc(synth.defName).valueEnvir.asControlInput;
+		// 	server.bind { synth.set(*specs) };
+		// };
 	}
 
 	release { |fadeTime|
@@ -134,38 +139,35 @@ BssBufferEvent : BssEvent {
 	resolveSource {
 		var name = specs[\sound];
 		var bank = specs[\bank];
-
 		if (bank.notNil) {
 			name = format("%_%", bank, name) 
 		};
-
 		^bss.soundLibrary.getBufferEvent(name, specs[\n] ? 0);
 	}
 
 	defaultSustain { ^source[\duration] }
 
 	sendSourceSynth {
-		bss.moduleLibrary.atSampler(specs[\sampler] ? \bufrd).value(this); 
+		sourceSynths = bss.moduleLibrary
+			.atSampler(specs[\sampler] ? \bufrd)
+			.value(this); 
 	}
 }
 
 BssSynthEvent : BssEvent {
-	getSynthEvent { |name|
-		var synthDesc = SynthDescLib.at(name.asSymbol);
+	resolveSource {
+		var name = specs[\sound].asSymbol;
+		var synthDesc = SynthDescLib.at(name);
 		if (synthDesc.isNil) {
-			"no synth named % in SynthDescLib".format(name).warn;
+			"no synth named '%' in SynthDescLib".format(name).warn;
 			^nil;
 		};
 		^(instrument: synthDesc.name);
 	}
 
-	resolveSource {
-		^this.getSynthEvent(specs[\sound]);
-	}
-
 	defaultSustain { ^1 }
 
 	sendSourceSynth {
-		this.sendSynth(source[\instrument]);
+		sourceSynths = this.sendSynth(source[\instrument]);
 	}
 }

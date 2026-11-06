@@ -9,7 +9,9 @@ BssModule {
 		var env = (specs ? ()).asEvent.copy;
 		env.parent = bssEvent.env;
 		env.use {
-			if (cond.value) { func.value(bssEvent) };
+			if (cond.value) {
+				^func.value(bssEvent) 
+			};
 		};
 	}
 }
