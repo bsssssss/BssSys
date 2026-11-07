@@ -20,7 +20,8 @@ SynthDef("bss_monitor" ++ numChannels, {
 // Synthdefs played through this system should only use Out.ar (no OffsetOut!)
 
 // auto closing gate after <sustain> seconds, or after <fadeOut> seconds when gate is set to 0
-SynthDef("bss_gate" ++ numChannels, { |in, out, sustain, gate(1), fadeIn(0), fadeOut(0.04)|
+SynthDef("bss_gate" ++ numChannels, { 
+	|in, out, sustain, gate(1), fadeIn(0), fadeOut(0.04)|
     var sig, env, gateEnv;
     sig = In.ar(in, numChannels);
 
