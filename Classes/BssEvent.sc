@@ -1,7 +1,7 @@
 BssEvent {
 	var <bss, <server, <event;
 	var <track, <group;
-	var <specs, <env, <source;
+	var <specs, <ctx;
 	var <sourceSynths, <effectChain, <gateSynth;
 	var <sourceEvents;
 
@@ -15,14 +15,6 @@ BssEvent {
 		sourceEvents = [];
 		sourceSynths = [];
 		effectChain = [];
-	}
-
-	numVoices {
-		var n = 1;
-		specs.keysValuesDo { |k, v|
-			if (v.isArray) { n = max(n, v.size) };
-		};
-		^n;
 	}
 
 	getMsgFunc { |instrument|
@@ -51,9 +43,17 @@ BssEvent {
 	// sendSourceSynth { ^this.subclassResponsibility(thisMethod) }
 	sendSourceSynth {
 		sourceEvents.do { |ev, i|
-			var samplerName = this.specAt(\sampler, i) ? \bufrd;
-			var module = bss.moduleLibrary.samplers.at(samplerName);
-			var synth = module.value(this, ev);
+			var synth, module;
+			if (ev.at(\sourceType) == \buffer) {
+				module = bss.moduleLibrary.samplers.at(this.specAt(\sampler, i) ? \bufrd);
+				synth = module.value(this, ev);
+			};
+			if (ev.at(\sourceType) == \synth) {
+				ev.parent = ctx;
+				ev.use {
+					synth = this.sendSynth(ev.at(\instrument));
+				}
+			};
 			if (synth.notNil) {
 				sourceSynths = sourceSynths.add(synth) 
 			};
@@ -62,12 +62,12 @@ BssEvent {
 
 	sendGateSynth {
 		var name = "bss_gate";
-		var synth = Synth.tail(group, name ++ env.at(\numChannels), [
+		var synth = Synth.tail(group, name ++ ctx.at(\numChannels), [
 			in: track.synthBus,
 			out: track.trackBus,
-			sustain: env.at(\sustain).debug("gateSynth::~sustain"),
-			fadeIn: env.at(\fadeIn) ? 0,
-			fadeOut: env.at(\fadeOut) ? 0.04
+			sustain: ctx.at(\sustain),
+			fadeIn: ctx.at(\fadeIn) ? 0,
+			fadeOut: ctx.at(\fadeOut) ? 0.04
 		]);
 		gateSynth = synth;
 	}
@@ -116,25 +116,52 @@ BssEvent {
 	}
 
 	resolveVoice { |index|
-		var name = this.specAt(\sound, index);
-		var bank = this.specAt(\bank, index);
-		var n    = this.specAt(\n, index);
-		var event;
+		var synthDesc; 
+		var bufEvent, synthEvent, event;
+
+		var name, bank, n, type;
+		name = this.specAt(\sound, index);
+		bank = this.specAt(\bank, index);
+		n    = this.specAt(\n, index);
+		type = this.specAt(\sourceType, index) ? \buffer;
 
 		if (bank.notNil) {
 			name = format("%_%", bank, name) 
 		};
 
-		event = bss.soundLibrary.getBufferEvent(name, n);
-		if (event.notNil) {
-			event = event.put(\sourceType, \buffer);
-			event = event.put(\sustain, this.specAt(\sustain, index) ? event.at(\duration) ? 1.0);
-			event = event ++ this.voiceSpecs(index); // get scalar values from specs for this voice
-			^event;
+		bufEvent = bss.soundLibrary.getBufferEvent(name, n);
+		if (bufEvent.notNil) {
+			bufEvent.put(\sustain, this.specAt(\sustain, index) ? bufEvent.at(\duration) ? 1.0);
+			bufEvent.put(\sourceType, \buffer);
+			bufEvent = bufEvent ++ this.voiceSpecs(index); // get scalar values from specs for this voice
 		};
 
-		// TODO: search synthDescLib
-		^nil;
+		synthDesc = SynthDescLib.at(name);
+		if (synthDesc.notNil) {
+			synthEvent = (instrument: synthDesc.name);
+			synthEvent.put(\sustain, this.specAt(\sustain, index) ? 1.0);
+			synthEvent.put(\sourceType, \synth);
+			synthEvent = synthEvent ++ this.voiceSpecs(index); // get scalar values from specs for this voice
+		};
+
+		if (bufEvent.isNil) {
+			if (synthEvent.isNil) {
+				"could not resolve voice: '%' not found.".error;
+				^nil;
+			} {
+				^synthEvent;
+			};
+		} {
+			^bufEvent;
+		};
+	}
+
+	numVoices {
+		var n = 1;
+		specs.keysValuesDo { |k, v|
+			if (v.isArray) { n = max(n, v.size) };
+		};
+		^n;
 	}
 
 	// resolveSource { ^this.subclassResponsibility(thisMethod) }
@@ -146,9 +173,6 @@ BssEvent {
 		^events;
 	}
 
-	// defaultSustain { ^this.subclassResponsibility(thisMethod) }
-	defaultSustain { }
-
 	maxSustain {
 		var res = 0;
 		sourceEvents.do { |e| res = max(res, e.at(\sustain)) };
@@ -156,14 +180,15 @@ BssEvent {
 	}
 
 	play {
-		env = specs.copy;
-		env.parent = track.defaultParentEvent;
-		env.use {
+		ctx = specs.copy;
+		ctx.parent = track.defaultParentEvent;
+		ctx.use {
 			sourceEvents = this.resolveSource;
-			if (sourceEvents.isEmpty) { ^this };
-			env.put(\sustain, this.maxSustain);
-			env.at(\sustain).debug("play::env.sustain");
-			~sustain.debug("~sustain");
+			if (sourceEvents.isEmpty) {
+				"could not play %: sourceEvents is empty".warn;
+				^this 
+			};
+			ctx.put(\sustain, this.maxSustain);
 			this.playSynths;
 		};
 	}
@@ -181,7 +206,7 @@ BssEvent {
 		// // target source synth only
 		// synth = synths[0];
 		//
-		// e.parent = env;
+		// e.parent = ctx;
 		// e.use {
 		// 	// valueEnvir.asControlInput allows passing defaultParentEvent params like 'note'
 		// 	var specs = this.getMsgFunc(synth.defName).valueEnvir.asControlInput;
@@ -203,44 +228,5 @@ BssEvent {
 		event.keysValuesDo { |k, v|
 			format("%: %", k, v).postln;
 		}
-	}
-}
-
-BssBufferEvent : BssEvent {
-	resolveSource {
-		var name = specs[\sound];
-		var bank = specs[\bank];
-
-		if (bank.notNil) {
-			name = format("%_%", bank, name) 
-		};
-
-		^bss.soundLibrary.getBufferEvent(name, specs[\n] ? 0);
-	}
-
-	defaultSustain {
-		^source[\duration] 
-	}
-
-	sendSourceSynth {
-		sourceSynths = bss.moduleLibrary.samplers.at(specs[\sampler] ? \bufrd).value(this); 
-	}
-}
-
-BssSynthEvent : BssEvent {
-	resolveSource {
-		var name = specs[\sound].asSymbol;
-		var synthDesc = SynthDescLib.at(name);
-		if (synthDesc.isNil) {
-			"cannot resolve source synth: no synth named '%' in SynthDescLib".format(name).warn;
-			^nil;
-		};
-		^(instrument: synthDesc.name);
-	}
-
-	defaultSustain { ^1 }
-
-	sendSourceSynth {
-		sourceSynths = this.sendSynth(source[\instrument]);
 	}
 }

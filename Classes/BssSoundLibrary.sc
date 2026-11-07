@@ -168,13 +168,10 @@ BssSoundLibrary {
 		^bufferEvents[name];
 	}
 
-	getBufferEvent { |name, index|
+	getBufferEvent { |name, index(0)|
 		var events = this.at(name.asSymbol);
-		if (events.isNil) {
-			"'%' is not registered in sound library".format(name).warn;
-			^nil;
-		};
-		^events.wrapAt(index.asInteger) 
+		if (events.isNil) { ^nil };
+		^events.wrapAt(index);
 	}
 
 	show {

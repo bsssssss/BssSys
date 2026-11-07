@@ -137,12 +137,12 @@ Bss {
 
 	snd { |name, specs|
 		specs = (sound: name) ++ (specs ? ()).asEvent;
-		^BssBufferEvent(this, specs);
+		^BssEvent(this, specs);
 	}
 
 	syn { |name, specs|
 		specs = (sound: name) ++ (specs ? ()).asEvent;
-		^BssSynthEvent(this, specs);
+		"Bss.syn not implemented. Use Bss.snd instead".warn;
 	}
 
 	seq {

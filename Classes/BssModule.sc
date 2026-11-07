@@ -7,7 +7,7 @@ BssModule {
 
 	value { |bssEvent, specs|
 		var env = (specs ? ()).asEvent.copy;
-		env.parent = bssEvent.env;
+		env.parent = bssEvent.ctx;
 		env.use {
 			if (cond.value) {
 				^func.value(bssEvent) 
