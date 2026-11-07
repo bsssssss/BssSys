@@ -64,7 +64,7 @@ BssEvent {
 				synth = module.value(this, ev);
 			};
 			if (ev.at(\sourceType) == \synth) {
-				ev.parent = ctx;
+				ev.parent = ctx.copy;
 				ev.use {
 					synth = this.sendSynth(ev.at(\instrument));
 				}
@@ -192,7 +192,7 @@ BssEvent {
 
 	play {
 		ctx = specs.copy;
-		ctx.parent = track.defaultParentEvent;
+		ctx.parent = track.defaultParentEvent.copy;
 		ctx.use {
 			sourceEvents = this.resolveSource;
 			if (sourceEvents.isEmpty) {
