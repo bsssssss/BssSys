@@ -7,8 +7,6 @@ s.waitForBoot {
 };
 )
 
-~bss.moduleLibrary.effects.at(\tilt_env).send.postcs
-
 // A sound event consists of a node group with:
 //		- a source synth (the generator).
 //		- an arbitrary number of chained effects synths.
@@ -16,7 +14,6 @@ s.waitForBoot {
 //
 // The gate handle the event's lifecycle (they free the whole group).
 
-s.plotTree;
 (
 // a basic sound event: 
 // Bss.snd(<name>, [specs], \searchMethod) -> a BssEvent that can be played
