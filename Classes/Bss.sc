@@ -9,10 +9,10 @@ Bss {
 
 	var <reaperProjectPath, <reaper;
 
-	*new {|numChannels, server|
+	*new {|server, numChannels|
 		^super.newCopyArgs(
-			numChannels: numChannels ? 2,
 			server: server ? Server.default,
+			numChannels: numChannels ? 2,
 		).init;
 	}
 
