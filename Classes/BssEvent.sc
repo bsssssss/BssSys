@@ -157,7 +157,7 @@ BssEvent {
 
 		if (bufEvent.isNil) {
 			if (synthEvent.isNil) {
-				"could not resolve voice: '%' not found.".error;
+				"could not resolve voice: '%' not found.".format(name).error;
 				^nil;
 			} {
 				^synthEvent;
@@ -196,7 +196,7 @@ BssEvent {
 		ctx.use {
 			sourceEvents = this.resolveSource;
 			if (sourceEvents.isEmpty) {
-				"could not play %: sourceEvents is empty".warn;
+				"could not resolve BssEvent%".format(specs).warn;
 				^this 
 			};
 			ctx.put(\sustain, this.maxSustain);
