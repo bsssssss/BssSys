@@ -27,7 +27,7 @@ BssEvent {
 		server = bss.server;
 		sourceEvents = [];
 		sourceSynths = [];
-		effectChain  = [];
+		effectChain = [];
 		this.resolveTrack;
 	}
 
@@ -54,7 +54,6 @@ BssEvent {
 		^synths;
 	}
 
-	// sendSourceSynth { ^this.subclassResponsibility(thisMethod) }
 	sendSourceSynth {
 		sourceEvents.do { |ev, i|
 			var synth, module;
@@ -66,7 +65,7 @@ BssEvent {
 			if (ev.at(\sourceType) == \synth) {
 				ev.parent = ctx.copy;
 				ev.use {
-					synth = this.sendSynth(ev.at(\instrument));
+					synth = this.sendSynth(ev.at(\instrument)); 
 				}
 			};
 			if (synth.notNil) {
@@ -127,14 +126,12 @@ BssEvent {
 	}
 
 	resolveVoice { |index|
-		var synthDesc; 
-		var bufEvent, synthEvent;
+		var bufEvent, synthDesc, synthEvent;
+		var name, bank, n;
 
-		var name, bank, n, type;
 		name = this.specAt(\sound, index);
 		bank = this.specAt(\bank, index);
-		n    = this.specAt(\n, index);
-		type = this.specAt(\sourceType, index) ? \buffer;
+		n = this.specAt(\n, index);
 
 		if (bank.notNil) {
 			name = format("%_%", bank, name) 
@@ -170,12 +167,13 @@ BssEvent {
 	numVoices {
 		var n = 1;
 		specs.keysValuesDo { |k, v|
-			if (v.isArray) { n = max(n, v.size) };
+			if (v.isArray) {
+				n = max(n, v.size) 
+			};
 		};
 		^n;
 	}
 
-	// resolveSource { ^this.subclassResponsibility(thisMethod) }
 	resolveSource {
 		var events;
 		var n = this.numVoices;
@@ -205,7 +203,7 @@ BssEvent {
 	}
 
 	set { |...args, kwargs|
-		"set method not implemented".warn;
+		"set not implemented".warn;
 		^this;
 		// var synth;
 		//
