@@ -1,9 +1,9 @@
 BssEvent {
-	var <bss, <server, <event;
+	var <bss, <server;
 	var <track, <group;
 	var <specs, <ctx;
-	var <sourceSynths, <effectChain, <gateSynth;
 	var <sourceEvents;
+	var <sourceSynths, <>effectChain, <gateSynth;
 
 	*new { |bss, specs|
 		^super.newCopyArgs(
@@ -86,13 +86,9 @@ BssEvent {
 		effectChain = effectChain.add((module: fx, specs: specs));
 	}
 
-	effectChain_ { |specArray|
-		effectChain = specArray.select(_.notNil);
-	}
-
 	sendEffectChain {
 		effectChain.do { |fx|
-			fx.module.value(this, fx.specs); 
+			if (fx.notNil) { fx.module.value(this, fx.specs) };
 		};
 	}
 
@@ -121,7 +117,7 @@ BssEvent {
 
 	resolveVoice { |index|
 		var synthDesc; 
-		var bufEvent, synthEvent, event;
+		var bufEvent, synthEvent;
 
 		var name, bank, n, type;
 		name = this.specAt(\sound, index);
