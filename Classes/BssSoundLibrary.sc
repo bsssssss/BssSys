@@ -154,8 +154,8 @@ BssSoundLibrary {
 
 	makeBufferEvent { |buffer|
 		var event = (
-			bufnum: buffer.bufnum,
 			buffer: buffer,
+			bufnum: buffer.bufnum,
 			filename: buffer.path.basename,
 			bufNumChannels: buffer.numChannels,
 			bufNumFrames: buffer.numFrames,
@@ -168,13 +168,10 @@ BssSoundLibrary {
 		^bufferEvents[name];
 	}
 
-	getBufferEvent { |name, index|
+	getBufferEvent { |name, index(0)|
 		var events = this.at(name.asSymbol);
-		if (events.notNil) {
-			^events.wrapAt(index.asInteger) 
-		};
-		"'%' is not registered in sound library".format(name).warn;
-		^nil;
+		if (events.isNil) { ^nil };
+		^events.wrapAt(index);
 	}
 
 	show {
