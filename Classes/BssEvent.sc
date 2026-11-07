@@ -6,7 +6,10 @@ BssEvent {
 	var <sourceEvents;
 
 	*new { |bss, specs|
-		^super.newCopyArgs(bss: bss, specs: specs).init;
+		^super.newCopyArgs(
+			bss: bss,
+			specs: specs
+		).init;
 	}
 
 	init {
@@ -14,7 +17,7 @@ BssEvent {
 		server = bss.server;
 		sourceEvents = [];
 		sourceSynths = [];
-		effectChain = [];
+		effectChain  = [];
 	}
 
 	getMsgFunc { |instrument|
@@ -22,7 +25,7 @@ BssEvent {
 		if (msgFunc.notNil) {
 			^msgFunc;
 		} {
-			format( "could not get msgFunc for '%'", instrument).error;
+			format("could not get msgFunc for '%'", instrument).error;
 		};
 	}
 
@@ -44,6 +47,7 @@ BssEvent {
 	sendSourceSynth {
 		sourceEvents.do { |ev, i|
 			var synth, module;
+			// TODO: use switch ?
 			if (ev.at(\sourceType) == \buffer) {
 				module = bss.moduleLibrary.samplers.at(this.specAt(\sampler, i) ? \bufrd);
 				synth = module.value(this, ev);
