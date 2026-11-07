@@ -19,6 +19,7 @@ BssTrack {
 
 		this.initNodeTree;
 		this.makeDefaultParentEvent;
+		defaultParentEvent.parent = bss.defaultParentEvent.copy;
 	}
 
 	initNodeTree {
@@ -33,21 +34,12 @@ BssTrack {
 
 	makeDefaultParentEvent {
 		defaultParentEvent = Event.make {
-			~bss         = bss;
-			~server      = server;
-			~numChannels = bss.numChannels;
-			~track       = this;
-			~out         = synthBus;
-			~trackBus    = trackBus;
-			~octave      = 5;
-			~note        = 0.0;
-			~scale       = Scale.chromatic;
-			~midinote    = #{ ~note.degreeToKey(~scale) + (12.0 * ~octave) };
-			~freq        = #{ ~midinote.value.midicps };
-			~n           = 0;
-			~amp         = 1.0;
-			~pan         = 0.0;
-			~gate        = 1;
-		}
+			~track    = this;
+			~out      = synthBus;
+			~trackBus = trackBus;
+			~amp      = 1.0;
+			~pan      = 0.0;
+			~gate     = 1;
+		};
 	}
 }

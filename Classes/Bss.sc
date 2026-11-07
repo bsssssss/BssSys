@@ -6,6 +6,7 @@ Bss {
 	var <tracks, <outBusses, <group;
 	var <moduleLibrary, <soundLibrary;
 	var <tuning, <clock;
+	var <defaultParentEvent;
 
 	var <reaperProjectPath, <reaper;
 
@@ -14,6 +15,20 @@ Bss {
 			server: server ? Server.default,
 			numChannels: numChannels ? 2,
 		).init;
+	}
+
+	makeDefaultParentEvent {
+		defaultParentEvent = Event.make {
+			~bss         = this;
+			~server      = server;
+			~numChannels = numChannels;
+			~octave      = 5;
+			~note        = 0.0;
+			~scale       = Scale.chromatic;
+			~midinote    = #{ ~note.degreeToKey(~scale) + (12.0 * ~octave) };
+			~freq        = #{ ~midinote.value.midicps };
+			~n           = 0;
+		}
 	}
 
 	init {
@@ -26,6 +41,7 @@ Bss {
 
 		this.loadSynthDefs("../lib".resolveRelative);
 		ServerTree.add(this, server);
+		this.makeDefaultParentEvent;
 
 		"ready.\n\n".post;
 	}
