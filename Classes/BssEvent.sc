@@ -5,19 +5,30 @@ BssEvent {
 	var <sourceEvents;
 	var <sourceSynths, <>effectChain, <gateSynth;
 
-	*new { |bss, specs|
+	*new { |bss, specs, track|
 		^super.newCopyArgs(
 			bss: bss,
-			specs: specs
+			specs: specs,
+			track: track ? 0
 		).init;
 	}
 
+	resolveTrack {
+		if (track.isArray) {
+			"track must be a scalar, got array. Taking first element (%)".format(track.first).warn;
+			track = bss.tracks.wrapAt(track.first);
+		} {
+			track = bss.tracks.wrapAt(track);
+		}
+	}
+
 	init {
-		track = bss.tracks.wrapAt(specs[\track] ? 0);
+		// TODO: validate & normalize specs
 		server = bss.server;
 		sourceEvents = [];
 		sourceSynths = [];
 		effectChain  = [];
+		this.resolveTrack;
 	}
 
 	getMsgFunc { |instrument|
