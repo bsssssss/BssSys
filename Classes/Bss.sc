@@ -17,20 +17,6 @@ Bss {
 		).init;
 	}
 
-	makeDefaultParentEvent {
-		defaultParentEvent = Event.make {
-			~bss         = this;
-			~server      = server;
-			~numChannels = numChannels;
-			~octave      = 5;
-			~note        = 0.0;
-			~scale       = Scale.chromatic;
-			~midinote    = #{ ~note.degreeToKey(~scale) + (12.0 * ~octave) };
-			~freq        = #{ ~midinote.value.midicps };
-			~n           = 0;
-		}
-	}
-
 	init {
 		moduleLibrary = BssModuleLibrary();
 		soundLibrary = BssSoundLibrary(server, numChannels);
@@ -49,6 +35,20 @@ Bss {
 	slib { ^soundLibrary; }
 	mlib { ^moduleLibrary; }
 
+	makeDefaultParentEvent {
+		defaultParentEvent = Event.make {
+			~bss         = this;
+			~server      = server;
+			~numChannels = numChannels;
+			~octave      = 5;
+			~note        = 0.0;
+			~scale       = Scale.chromatic;
+			~midinote    = #{ ~note.degreeToKey(~scale) + (12.0 * ~octave) };
+			~freq        = #{ ~midinote.value.midicps };
+			~n           = 0;
+		}
+	}
+
 	createTracks {
 		outBusses.do { |outBus, id|
 			var track = BssTrack(this, outBus, id);
@@ -59,6 +59,10 @@ Bss {
 	initNodeTree {
 		server.sendMsg("/g_new", group, 0, 1);
 		tracks.do(_.initNodeTree);
+	}
+
+	doOnServerTree {
+		this.initNodeTree;
 	}
 
 	loadSynthDefs { |path|
@@ -83,6 +87,38 @@ Bss {
 
 	addSamplerModule { |name, func, cond|
 		moduleLibrary.addSampler(name, func, cond);
+	}
+
+	/* Startup */
+
+	start { |busses([0]), withReaper(false)|
+		outBusses = busses.asArray;
+		this.initNodeTree;
+		this.createTracks;
+		if (withReaper) { this.mkReaperProject };
+	}
+
+	/* Playing */
+
+	snd { |name, specs|
+		specs = (sound: name) ++ (specs ? ()).asEvent;
+		^BssEvent(this, specs);
+	}
+
+	syn { |name, specs|
+		specs = (sound: name) ++ (specs ? ()).asEvent;
+		"Bss.syn not implemented. Use Bss.snd instead".warn;
+	}
+
+	seq {
+		^BssSeq(this.clock);
+	}
+
+	/* Utils */
+
+	show {
+		moduleLibrary.show;
+		soundLibrary.show;
 	}
 
 	/* Reaper */
@@ -129,39 +165,4 @@ Bss {
 		reaper = ReaperControl.start;
 	}
 
-	/* Startup */
-
-	start { |busses([0]), withReaper(false)|
-		outBusses = busses.asArray;
-		this.initNodeTree;
-		this.createTracks;
-		if (withReaper) { this.mkReaperProject };
-	}
-
-	doOnServerTree {
-		this.initNodeTree;
-	}
-
-	/* Utils */
-
-	show {
-		moduleLibrary.show;
-		soundLibrary.show;
-	}
-
-	/* Playing */
-
-	snd { |name, specs|
-		specs = (sound: name) ++ (specs ? ()).asEvent;
-		^BssEvent(this, specs);
-	}
-
-	syn { |name, specs|
-		specs = (sound: name) ++ (specs ? ()).asEvent;
-		"Bss.syn not implemented. Use Bss.snd instead".warn;
-	}
-
-	seq {
-		^BssSeq(this.clock);
-	}
 }
