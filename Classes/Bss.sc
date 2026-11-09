@@ -90,8 +90,8 @@ Bss {
 		outBuses = buses.asArray;
 	/* Startup */
 
-		this.initNodeTree;
 		this.createTracks;
+		this.initNodeTree;
 	}
 
 	/* Playing */

@@ -17,7 +17,6 @@ BssTrack {
 		synthBus = Bus.audio(server, bss.numChannels);
 		trackBus = Bus.audio(server, bss.numChannels);
 
-		this.initNodeTree;
 		this.makeDefaultParentEvent;
 		defaultParentEvent.parent = bss.defaultParentEvent.copy;
 	}
