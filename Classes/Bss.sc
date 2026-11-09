@@ -8,8 +8,6 @@ Bss {
 	var <tuning, <clock;
 	var <defaultParentEvent;
 
-	var <reaperProjectPath, <reaper;
-
 	*new {|server, numChannels|
 		^super.newCopyArgs(
 			server: server ? Server.default,
@@ -89,13 +87,12 @@ Bss {
 		moduleLibrary.addSampler(name, func, cond);
 	}
 
+	start { |buses([0])|
 	/* Startup */
 
-	start { |busses([0]), withReaper(false)|
 		outBusses = busses.asArray;
 		this.initNodeTree;
 		this.createTracks;
-		if (withReaper) { this.mkReaperProject };
 	}
 
 	/* Playing */
@@ -120,49 +117,4 @@ Bss {
 		moduleLibrary.show;
 		soundLibrary.show;
 	}
-
-	/* Reaper */
-
-	mkReaperProject {
-		var basePath, projectPath, masterFxNode, project, numTracks, tracks;
-
-		if (ReaProj.asClass.isNil) {
-			^"Failed to create reaper project: Need ReaCollider quark".warn;
-		};
-
-		if (server.options.outDevice.isNil or: { server.options.outDevice.contains("BlackHole").not }) {
-			^"Failed to create reaper project: output device is not 'BlackHole'".warn;
-		};
-
-		basePath = "~/Sounds/reaper/sc/bss/%".format(Date.getDate.format("%y-%m-%d")).asAbsolutePath;
-		File.mkdir(basePath);
-
-		projectPath = "~/Sounds/reaper/sc/bss/%/%.RPP".format(Date.getDate.format("%y-%m-%d"), Date.getDate.hourStamp).asAbsolutePath;
-		project = ReaProj();
-
-		numTracks = outBusses.as(Set).size;
-		if (server.options.numOutputBusChannels < (numTracks * numChannels)) {
-			^"Failed to create reaper project: s.options.numOutputBusChannels should be at least %" .format(numTracks * numChannels).warn;
-		};
-
-		tracks = numTracks.collect{ |i|
-			var props = ();
-			props.put(\NAME, "track_%".format(i+1));
-			// stereo rec inputs starts from 1024
-			props.put(\REC, "1 % 1 0 0 0 0".format((i * 2) + 1024));
-			ReaTrack.new(props)
-		};
-
-		tracks.do{|track|
-			project.addTrack(track)
-		};
-
-		project.write(projectPath);
-		reaperProjectPath = projectPath;
-		format("Created reaper project in '%'", projectPath).postln;
-
-		projectPath.openOS;
-		reaper = ReaperControl.start;
-	}
-
 }
