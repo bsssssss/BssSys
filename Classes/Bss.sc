@@ -76,8 +76,6 @@ Bss {
 		};
 	}
 
-	/* Modules */
-
 	addEffectModule { |name, func, cond|
 		moduleLibrary.addEffect(name, func, cond);
 	}
@@ -88,13 +86,9 @@ Bss {
 
 	start { |buses([0])|
 		outBuses = buses.asArray;
-	/* Startup */
-
 		this.createTracks;
 		this.initNodeTree;
 	}
-
-	/* Playing */
 
 	snd { |name, specs|
 		specs = (sound: name) ++ (specs ? ()).asEvent;
@@ -109,8 +103,6 @@ Bss {
 	seq {
 		^BssSeq(this.clock);
 	}
-
-	/* Utils */
 
 	show {
 		moduleLibrary.show;
