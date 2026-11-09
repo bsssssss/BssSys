@@ -2,8 +2,7 @@ Bss {
 	classvar <>maxSoundFileNumChannels = 2; // expected maximum number of channels for sound files
 
 	var <server, <numChannels;
-
-	var <tracks, <outBusses, <group;
+	var <tracks, <outBuses, <group;
 	var <moduleLibrary, <soundLibrary;
 	var <tuning, <clock;
 	var <defaultParentEvent;
@@ -48,7 +47,7 @@ Bss {
 	}
 
 	createTracks {
-		outBusses.do { |outBus, id|
+		outBuses.do { |outBus, id|
 			var track = BssTrack(this, outBus, id);
 			tracks = tracks.add(track);
 		};
@@ -88,9 +87,9 @@ Bss {
 	}
 
 	start { |buses([0])|
+		outBuses = buses.asArray;
 	/* Startup */
 
-		outBusses = busses.asArray;
 		this.initNodeTree;
 		this.createTracks;
 	}
