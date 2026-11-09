@@ -1,9 +1,7 @@
 (
 var numChannels = ~bss.numChannels;
 
-/*
- * These are instanciated at startup time
- */
+/* instanciated at startup time */
 
 SynthDef("bss_monitor" ++ numChannels, {
     var sig = In.ar(\in.ir(0), numChannels);
@@ -11,9 +9,7 @@ SynthDef("bss_monitor" ++ numChannels, {
     Out.ar(\out.ir(0), sig);
 }).add;
 
-/*
- * These are instanciated per event
- */
+/* instanciated per event */
 
 // gate is special, always last in the audio chain before going out to monitoring synths.
 // It is responsible for the time offset of the event and freeing the event's group.
